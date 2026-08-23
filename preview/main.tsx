@@ -31,6 +31,9 @@ function toggleTheme(): void {
 
 document.querySelector("#theme")?.addEventListener("click", toggleTheme);
 
+// 支持 ?mode=mini 参数直接渲染 Mini 形态（E2E 用）
+const urlMode = new URLSearchParams(window.location.search).get("mode");
+
 render(
   () => (
     <NyxPlayer
@@ -39,6 +42,7 @@ render(
       playBtn="#play"
       darkModeTarget="html[data-theme='dark']"
       preset="nyx"
+      mode={urlMode === "mini" ? "mini" : undefined}
     />
   ),
   document.querySelector("#app")!,

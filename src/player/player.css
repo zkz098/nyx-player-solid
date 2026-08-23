@@ -233,3 +233,35 @@
   text-align: center;
   padding: 2rem 0;
 }
+
+/* ---- Mini 形态（R4 8.4） ---- */
+.nyx-player.nyx-minibar {
+  box-shadow: 0 0.625rem 1.875rem -0.9375rem var(--box-bg-shadow);
+  background: var(--player-background);
+  -webkit-backdrop-filter: blur(0.625rem);
+  backdrop-filter: blur(0.625rem);
+  color: var(--primary-text);
+  right: 3.5rem;
+  bottom: 1rem;
+}
+
+.nyx-minibar button {
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0.25rem;
+  flex-shrink: 0;
+}
+
+.nyx-minibar button:hover {
+  color: var(--hover-btn);
+}
+
+.nyx-minibar-placeholder {
+  background: var(--primary-color-a);
+}
+
+.nyx-minibar span.truncate {
+  max-width: 8rem;
+}

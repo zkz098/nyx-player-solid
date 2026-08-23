@@ -7,6 +7,7 @@ import { useExternalButton } from "./external-button";
 import type { ExternalButtonRef } from "./external-button";
 import { useMediaSession } from "./media-session";
 import { Panel } from "./components/Panel";
+import { MiniBar } from "./components/MiniBar";
 import { createPlayerStore, PlayerProvider } from "./store";
 import type { PlayerStore, StorageLike } from "./store";
 import { useTheme } from "./theme";
@@ -29,6 +30,8 @@ export interface NyxPlayerProps {
   provider?: MetadataProvider;
   /** 跨页持久化（默认开启；false 关闭；可传自定义 storage） */
   persist?: boolean | StorageLike;
+  /** 形态：完整面板（默认）或 Mini 浮条（展开按钮切回面板） */
+  mode?: "panel" | "mini";
 }
 
 /** 根组件：创建实例（工厂隔离）+ 注入 Context + 面板挂到 body + 外部按钮绑定 + 点外部关闭 */
@@ -45,6 +48,7 @@ export function NyxPlayer(props: NyxPlayerProps): JSX.Element {
   });
   const [show, setShow] = createSignal(false);
   const [panelEl, setPanelEl] = createSignal<HTMLDivElement | null>(null);
+  const [mode, setMode] = createSignal<"panel" | "mini">(props.mode ?? "panel");
 
   onMount(() => {
     void store.init();
@@ -100,7 +104,12 @@ export function NyxPlayer(props: NyxPlayerProps): JSX.Element {
       <Show when={show()}>
         {/* Solid 的 Portal 不继承外层 Context，需在 Portal 内重新注入 */}
         <PlayerProvider store={store}>
-          <Panel onClose={() => setShow(false)} panelRef={setPanelEl} />
+          <Show
+            when={mode() === "panel"}
+            fallback={<MiniBar barRef={setPanelEl} onExpand={() => setMode("panel")} />}
+          >
+            <Panel onClose={() => setShow(false)} panelRef={setPanelEl} />
+          </Show>
         </PlayerProvider>
       </Show>
     </Portal>
