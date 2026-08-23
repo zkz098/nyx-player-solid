@@ -1,6 +1,6 @@
 # NyxPlayer Solid — TODO
 
-> 状态时间: 2026-08-23（R4 扩展 8.1-8.6 已完成，8.7 文档/示例站按用户指示推迟待命）
+> 状态时间: 2026-08-23（R4 扩展 8.1-8.7 全部完成）
 > 决策与调研背景: `docs/refactor-analysis.md`（§5 多轮决策定版）
 
 ## ✅ 已完成里程碑
@@ -17,6 +17,7 @@
 | 8   | R4 8.4 MiniBar 双形态                                                          | `5b1394d` | 104 unit + 11 E2E + build           |
 | 9   | R4 8.5 跨歌单连续播放 + 播放历史                                               | `982abf9` | 115 unit + 11 E2E + build           |
 | 10  | R4 8.6 音频可视化 + CPU 性能层级自适应帧率                                     | `37880c4` | 122 unit + 12 E2E + build+SSR check |
+| 11  | R4 8.7 中英双语文档站（Astro Starlight）+ README/LICENSE                       | `61c753a` | docs:build 23 页 + demo + pack 核对 |
 
 工具链基线（每次改动必须保持）: `oxlint --type-aware --type-check` / `oxfmt` / `tsc -p tsconfig.json` / `vitest run` / `playwright test` / `pnpm build`（含 ssr-check）全绿，`pnpm lint:ci` / `format:ci` 被 CI 使用。
 
@@ -64,13 +65,13 @@
 - [x] 低帧率 rAF ~30fps + **CPU 性能层级自适应**：WICG `navigator.cpuPerformance` ≥4 → 60fps，否则/不支持 → 30fps
 - [x] E2E canvas 存在且无 pageerror
 
-### 8.7 文档与示例站 【已推迟，待命】
+### 8.7 文档与示例站 ✅ `61c753a`
 
-- [ ] README 完整化（API / prop 表 / custom element 用法 / SSR 用法）
-- [ ] 示例: direct provider / meting 自托管端点 / 自定义主题 / Astro 集成示例
-- [ ] 发布前: `pnpm publish --dry-run` 核对 files 内容
+- [x] README 完整化（API / prop 表 / custom element 用法 / SSR 用法）+ LICENSE（AGPL-3.0 全文）
+- [x] 示例: 中英双语文档站（Astro Starlight 11 页，root locale=zh-cn + en）+ 实时 demo（自包含 bundle，可改 `docs/static/demo/sources.js`）+ Cloudflare Pages 部署指南
+- [x] 发布前: `pnpm publish --dry-run` / `pnpm pack` 核对（42 文件：dist 双产物 + d.ts + css + assets + README/LICENSE）
 
-> 用户指示（2026-08-23）：文档与示例站暂时推迟，其他任务完成后待命。
+> 用户指示（2026-08-23）：文档站用 Astro Starlight，中英双语，Cloudflare Pages，内嵌 demo。已全部落地。
 
 ---
 
