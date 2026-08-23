@@ -17,7 +17,7 @@
     "allowImportingTsExtensions": true,
     "erasableSyntaxOnly": true,
     "noEmit": true,
-    "types": ["vitest/globals", "@testing-library/jest-dom"],
+    "types": ["vitest/globals", "@testing-library/jest-dom", "node"],
     "paths": {
       "@/*": ["./src/*"]
     }
@@ -27,6 +27,7 @@
     "preview/**/*",
     "tests/**/*",
     "vite.config.ts",
+    "playwright.config.ts",
     "oxlint.config.ts",
     "oxfmt.config.ts",
     "uno.config.ts"

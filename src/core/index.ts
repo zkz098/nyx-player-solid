@@ -10,7 +10,8 @@ export type {
   Song,
 } from "./types";
 
-export { BoundedMap, parseLyric, parseLyricLine } from "./lrc";
+export { BoundedMap, findActiveLyricIndex, parseLyric, parseLyricLine } from "./lrc";
+export { fetchLyricText } from "./lyrics-fetch";
 export { ConcurrencyPool, runWithPool } from "./pool";
 export { hasPlaylistURL, parsePlaylistUrl } from "./url-parser";
 export { createMetingProvider } from "./providers/meting";

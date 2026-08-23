@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BoundedMap, parseLyric, parseLyricLine } from "@/core/lrc";
+import { BoundedMap, findActiveLyricIndex, parseLyric, parseLyricLine } from "@/core/lrc";
 
 describe("parseLyricLine", () => {
   it("parses mm:ss.xx (2-digit msec)", () => {
@@ -39,6 +39,25 @@ describe("parseLyric", () => {
 
   it("returns empty array for empty input", () => {
     expect(parseLyric("")).toEqual([]);
+  });
+});
+
+describe("findActiveLyricIndex", () => {
+  const lines = parseLyric("[00:00.00]一\n[00:10.00]二\n[00:20.00]三");
+
+  it("tracks progression of time across lines (原版 lrcIdx 恒 0 bug 回归)", () => {
+    expect(findActiveLyricIndex(lines, 0)).toBe(0);
+    expect(findActiveLyricIndex(lines, 9.99)).toBe(0);
+    expect(findActiveLyricIndex(lines, 10)).toBe(1); // 第二行开始激活
+    expect(findActiveLyricIndex(lines, 25)).toBe(2);
+  });
+
+  it("falls back to last line when past the end", () => {
+    expect(findActiveLyricIndex(lines, 999)).toBe(2);
+  });
+
+  it("returns -1 for empty lyrics", () => {
+    expect(findActiveLyricIndex([], 5)).toBe(-1);
   });
 });
 

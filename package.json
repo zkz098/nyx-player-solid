@@ -48,6 +48,7 @@
     "@playwright/test": "^1.61.1",
     "@solidjs/testing-library": "^0.8.10",
     "@testing-library/jest-dom": "^7.0.1",
+    "@types/node": "^26.2.0",
     "@unocss/preset-icons": "^66.7.4",
     "jsdom": "^30.0.1",
     "oxfmt": "^0.57.0",

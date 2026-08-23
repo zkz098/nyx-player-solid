@@ -4,6 +4,10 @@ import UnoCSS from "unocss/vite";
 
 export default defineConfig({
   plugins: [solid(), UnoCSS()],
+  server: {
+    port: 5199,
+    strictPort: true,
+  },
   resolve: {
     alias: {
       "@": "/src",

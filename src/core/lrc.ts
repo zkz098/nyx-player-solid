@@ -40,6 +40,23 @@ export function parseLyric(lyric: string): LyricLine[] {
   }));
 }
 
+/**
+ * 定位当前时间对应的活动歌词行索引（原版 bug：lrcIdx 从不递增 → 此逻辑被组件化地推到 core）。
+ * 线性查找 O(n)；无匹配时回退到最后一行（末尾已过），空列表返回 -1。
+ */
+export function findActiveLyricIndex(lines: LyricLine[], time: number): number {
+  if (lines.length === 0) {
+    return -1;
+  }
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line && time >= line.start && time < line.end) {
+      return i;
+    }
+  }
+  return lines.length - 1;
+}
+
 /** 有界 Map：超出上限时淘汰最早插入的键（原版 MaximumMap 迁移，作歌词缓存） */
 export class BoundedMap<K, V> extends Map<K, V> {
   readonly maxSize: number;
