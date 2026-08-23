@@ -4,6 +4,7 @@ import type { JSX } from "solid-js";
 import { createContext, onCleanup, useContext } from "solid-js";
 import type {
   AudioAdapter,
+  HistoryEntry,
   MetadataProvider,
   PlayMode,
   PlaylistSource,
@@ -63,6 +64,11 @@ export interface PlayerStore {
   toggleMute(): void;
   selectPlaylist(index: number): void;
   playSong(playlistIndex: number, songIndex: number): void;
+  /** 播放历史：后退 / 前进 / 清空 / 读取 */
+  back(): void;
+  forward(): void;
+  clearHistory(): void;
+  getHistory(): HistoryEntry[];
 }
 
 function defaultStorage(): StorageLike | null {
@@ -211,6 +217,10 @@ export function createPlayerStore(options: PlayerStoreOptions): PlayerStore {
     toggleMute: () => core.toggleMute(),
     selectPlaylist: (index: number) => core.selectPlaylist(index),
     playSong: (playlistIndex: number, songIndex: number) => core.playSong(playlistIndex, songIndex),
+    back: () => core.back(),
+    forward: () => core.forward(),
+    clearHistory: () => core.clearHistory(),
+    getHistory: () => core.getHistory(),
   };
 }
 

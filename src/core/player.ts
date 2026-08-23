@@ -35,6 +35,12 @@ export interface PlayerCoreOptions {
   initialVolume?: number;
 }
 
+/** 播放历史条目（R4 8.5：歌曲索引升级为带歌单维度的栈） */
+export interface HistoryEntry {
+  playlistIndex: number;
+  songIndex: number;
+}
+
 const INITIAL_STATE: PlayerState = {
   playing: false,
   currentTime: 0,
@@ -77,8 +83,9 @@ export class PlayerCore {
   private readonly provider: MetadataProvider;
   private readonly listeners = new Set<(state: PlayerState) => void>();
   private readonly disposers: Array<() => void> = [];
-  /** 歌曲索引历史（原版 lastIdx 单值升级为栈，R4 播放历史扩展的地基） */
-  private history: number[] = [];
+  /** 歌曲索引历史栈（原版 lastIdx 单值升级，R4 8.5 播放历史）。含歌单维度；cursor 指向当前播放条目 */
+  private history: HistoryEntry[] = [];
+  private historyCursor = -1; // -1 = 尚未初始化（当前播放的是初始歌曲）
 
   constructor(options: PlayerCoreOptions = {}) {
     this.adapter = options.adapter ?? createHTMLAudioAdapter();
@@ -147,7 +154,9 @@ export class PlayerCore {
     }
   }
 
-  /** 切下一首。mode=loop 时等价原版 audio.loop 单曲循环：重播当前曲 */
+  /** 切下一首。mode=loop 时等价原版 audio.loop 单曲循环：重播当前曲。
+   * mode=order：歌单内末首后跨到下一非空歌单（环形回绕，R4 8.5 跨歌单连续播放）。
+   * mode=random：当前歌单内随机。 */
   next(): void {
     const songs = this.currentSongs();
     if (songs.length === 0) {
@@ -159,9 +168,32 @@ export class PlayerCore {
       return;
     }
     const current = this.state.perSongIndex[this.state.playlistIndex] ?? 0;
-    const target =
-      this.state.mode === "random" ? randomIndex(songs.length) : (current + 1) % songs.length;
-    this.switchSong(this.state.playlistIndex, target);
+    if (this.state.mode === "random") {
+      this.switchSong(this.state.playlistIndex, randomIndex(songs.length));
+      return;
+    }
+    const target = current + 1;
+    if (target < songs.length) {
+      this.switchSong(this.state.playlistIndex, target);
+      return;
+    }
+    this.advanceToNextPlaylist();
+  }
+
+  /** 跨歌单：跳到下一个非空歌单的第一首（环形）；全部为空则原地不动 */
+  private advanceToNextPlaylist(): void {
+    const count = this.state.playlists.length;
+    const start = this.state.playlistIndex;
+    for (let step = 1; step <= count; step++) {
+      const index = (start + step) % count;
+      const songs = this.state.playlists[index];
+      if (songs && songs.length > 0) {
+        // switchSong 不更新 playlistIndex（同歌单导航不需要），跨歌单必须显式切换
+        this.setState({ playlistIndex: index });
+        this.switchSong(index, 0);
+        return;
+      }
+    }
   }
 
   /** 切上一首。非 order 模式支持回退到上次离开的歌曲（原版 lastIdx 语义） */
@@ -245,6 +277,43 @@ export class PlayerCore {
     }
   }
 
+  /** 播放历史：后退（回到上一首记录）。无历史可退时不动 */
+  back(): void {
+    if (this.historyCursor <= 0) {
+      return;
+    }
+    const entry = this.history[this.historyCursor - 1];
+    if (!entry) {
+      return;
+    }
+    this.historyCursor -= 1;
+    this.gotoHistory(entry);
+  }
+
+  /** 播放历史：前进（redo）。无前进分支时不动 */
+  forward(): void {
+    if (this.historyCursor < 0 || this.historyCursor >= this.history.length - 1) {
+      return;
+    }
+    const entry = this.history[this.historyCursor + 1];
+    if (!entry) {
+      return;
+    }
+    this.historyCursor += 1;
+    this.gotoHistory(entry);
+  }
+
+  /** 清空播放历史（当前歌曲保留） */
+  clearHistory(): void {
+    this.history = [];
+    this.historyCursor = -1;
+  }
+
+  /** 当前历史栈（只读，供 UI 展示） */
+  getHistory(): HistoryEntry[] {
+    return this.history.slice();
+  }
+
   dispose(): void {
     this.disposers.forEach((dispose) => dispose());
     this.disposers.length = 0;
@@ -296,7 +365,6 @@ export class PlayerCore {
     this.next();
   }
 
-  /** 切换歌曲：记录历史、更新索引、换源；切换后按播放状态续播 */
   /**
    * 切换歌曲：记录历史、更新索引、换源；切换后按播放状态续播。
    * @param updateLast 是否把 previous 记为 last（back-to-last 回退场景传 false，保持历史指向不变）
@@ -313,7 +381,7 @@ export class PlayerCore {
     if (updateLast) {
       perLastIndex[playlistIndex] = previous;
     }
-    this.history.push(songIndex);
+    this.recordHistory(playlistIndex, songIndex);
 
     const wasPlaying = this.state.playing;
     this.setState({ perSongIndex, perLastIndex, currentTime: 0, duration: 0 });
@@ -321,6 +389,42 @@ export class PlayerCore {
     if (wasPlaying) {
       void this.playAudio().catch(() => undefined);
     }
+  }
+
+  /** 记录播放历史（首次记录包含初始歌曲，使 back 可回到起点；主动导航丢弃 forward 分支） */
+  private recordHistory(playlistIndex: number, songIndex: number): void {
+    if (this.history.length === 0 && this.historyCursor < 0) {
+      this.history.push({ playlistIndex, songIndex: this.state.perSongIndex[playlistIndex] ?? 0 });
+      this.historyCursor = 0;
+    }
+    this.history = this.history.slice(0, this.historyCursor + 1);
+    this.history.push({ playlistIndex, songIndex });
+    this.historyCursor = this.history.length - 1;
+  }
+
+  /** 历史导航：切到目标条目（不更新 last、不记录历史、保持播放状态） */
+  private gotoHistory(entry: HistoryEntry): void {
+    const songs = this.state.playlists[entry.playlistIndex];
+    if (!songs || entry.songIndex < 0 || entry.songIndex >= songs.length) {
+      return;
+    }
+    const wasPlaying = this.state.playing;
+    this.setState({
+      currentTime: 0,
+      duration: 0,
+      playlistIndex: entry.playlistIndex,
+      perSongIndex: this.withIndex(entry.playlistIndex, entry.songIndex),
+    });
+    this.syncSourceToAdapter();
+    if (wasPlaying) {
+      void this.playAudio().catch(() => undefined);
+    }
+  }
+
+  private withIndex(playlistIndex: number, songIndex: number): number[] {
+    const perSongIndex = [...this.state.perSongIndex];
+    perSongIndex[playlistIndex] = songIndex;
+    return perSongIndex;
   }
 
   private syncSourceToAdapter(): void {

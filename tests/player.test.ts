@@ -89,7 +89,7 @@ describe("PlayerCore: play/pause", () => {
 });
 
 describe("PlayerCore: next / prev", () => {
-  it("order mode next wraps within playlist and switches src", async () => {
+  it("order mode next crosses to next playlist then wraps (R4 8.5)", async () => {
     const { player, adapter } = await createPlayer();
     player.next();
     expect(currentSongOf(player.getState())?.name).toBe("s1");
@@ -98,7 +98,11 @@ describe("PlayerCore: next / prev", () => {
     player.next();
     expect(currentSongOf(player.getState())?.name).toBe("s2");
     player.next();
-    expect(currentSongOf(player.getState())?.name).toBe("s0"); // wrap
+    expect(currentSongOf(player.getState())?.name).toBe("t0"); // 跨到下一歌单
+    player.next();
+    expect(currentSongOf(player.getState())?.name).toBe("t1");
+    player.next();
+    expect(currentSongOf(player.getState())?.name).toBe("s0"); // 环形回绕回首个歌单
   });
 
   it("order mode prev wraps backwards", async () => {
@@ -153,7 +157,7 @@ describe("PlayerCore: next / prev", () => {
 });
 
 describe("PlayerCore: ended auto-advance (fixed bug)", () => {
-  it("order mode advances to next song and keeps playing", async () => {
+  it("order mode advances to next playlist after last song, keeps playing (R4 8.5)", async () => {
     const { player, adapter } = await createPlayer();
     player.play();
     // 播到最后一首
@@ -161,7 +165,7 @@ describe("PlayerCore: ended auto-advance (fixed bug)", () => {
     player.next();
     expect(currentSongOf(player.getState())?.name).toBe("s2");
     adapter.fireEnded();
-    expect(currentSongOf(player.getState())?.name).toBe("s0"); // wrap + auto continue
+    expect(currentSongOf(player.getState())?.name).toBe("t0"); // 跨歌单 + auto continue
     expect(adapter.playing).toBe(true);
   });
 

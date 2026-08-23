@@ -30,4 +30,4 @@ export { createCompositeProvider } from "./providers/composite";
 export { createHTMLAudioAdapter } from "./audio-adapter";
 export type { AudioAdapter, AudioAdapterEvent } from "./audio-adapter";
 export { PlayerCore, currentSongOf } from "./player";
-export type { PlayerCoreOptions, PlayerState } from "./player";
+export type { HistoryEntry, PlayerCoreOptions, PlayerState } from "./player";
