@@ -1,8 +1,8 @@
 import type { JSX } from "solid-js";
-import { Show } from "solid-js";
-import { createSignal, onMount } from "solid-js";
+import { createEffect, createSignal, onCleanup, onMount, Show } from "solid-js";
 import { Portal } from "solid-js/web";
 import type { MetadataProvider, PlaylistSource } from "@/core";
+import { resolveExternalButton } from "./external-button";
 import { useExternalButton } from "./external-button";
 import type { ExternalButtonRef } from "./external-button";
 import { Panel } from "./components/Panel";
@@ -30,7 +30,7 @@ export interface NyxPlayerProps {
   persist?: boolean | StorageLike;
 }
 
-/** 根组件：创建实例（工厂隔离）+ 注入 Context + 面板挂到 body + 外部按钮绑定 */
+/** 根组件：创建实例（工厂隔离）+ 注入 Context + 面板挂到 body + 外部按钮绑定 + 点外部关闭 */
 export function NyxPlayer(props: NyxPlayerProps): JSX.Element {
   const store: PlayerStore = createPlayerStore({
     sources: props.urls,
@@ -43,6 +43,7 @@ export function NyxPlayer(props: NyxPlayerProps): JSX.Element {
           : undefined,
   });
   const [show, setShow] = createSignal(false);
+  const [panelEl, setPanelEl] = createSignal<HTMLDivElement | null>(null);
 
   onMount(() => {
     void store.init();
@@ -65,12 +66,37 @@ export function NyxPlayer(props: NyxPlayerProps): JSX.Element {
     active: () => store.state.playing,
   });
 
+  // 点击面板外部关闭（原版 onClickOutside 等价功能；忽略外部按钮点击）
+  createEffect(() => {
+    if (!show()) {
+      return;
+    }
+    const onPointerDown = (event: PointerEvent): void => {
+      if (!(event.target instanceof Node)) {
+        return;
+      }
+      const target = event.target;
+      const panel = panelEl();
+      if (panel?.contains(target)) {
+        return;
+      }
+      const showEl = resolveExternalButton(props.showBtn);
+      const playEl = resolveExternalButton(props.playBtn);
+      if (showEl?.contains(target) || playEl?.contains(target)) {
+        return;
+      }
+      setShow(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    onCleanup(() => document.removeEventListener("pointerdown", onPointerDown));
+  });
+
   return (
     <Portal mount={typeof document !== "undefined" ? document.body : undefined}>
       <Show when={show()}>
         {/* Solid 的 Portal 不继承外层 Context，需在 Portal 内重新注入 */}
         <PlayerProvider store={store}>
-          <Panel onClose={() => setShow(false)} />
+          <Panel onClose={() => setShow(false)} panelRef={setPanelEl} />
         </PlayerProvider>
       </Show>
     </Portal>

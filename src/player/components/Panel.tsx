@@ -10,6 +10,8 @@ import "../player.css";
 
 interface PanelProps {
   onClose: () => void;
+  /** 面板根元素引用（供外部点击关闭判定） */
+  panelRef?: (el: HTMLDivElement | null) => void;
 }
 
 /** 播放器面板（对应原版 AudioPlayer.vue；audio 引擎由 PlayerCore+adapter 内部持有，UI 无 <audio> 直接依赖） */
@@ -22,7 +24,10 @@ export function Panel(props: PanelProps): JSX.Element {
   }
 
   return (
-    <div class="nyx-player panel player-info border-radius-0.8rem fixed z-9 overflow-hidden rounded-xl">
+    <div
+      ref={props.panelRef}
+      class="nyx-player panel player-info border-radius-0.8rem fixed z-9 overflow-hidden rounded-xl"
+    >
       <Show when={hasLoaded()} fallback={<div class="nyx-loading">加载歌单中…</div>}>
         <AudioCover />
         <AudioInfo />

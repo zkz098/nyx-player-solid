@@ -158,6 +158,10 @@ export function createPlayerStore(options: PlayerStoreOptions): PlayerStore {
   onCleanup(() => {
     unsubscribe();
     stopPersistence();
+    // flush：确保 debounce 挂起的最后一次状态落盘（避免 dispose 丢状态）
+    if (storage) {
+      storage.setItem(PERSIST_KEY, JSON.stringify(pickPersisted(core.getState())));
+    }
     core.dispose();
   });
 
@@ -176,12 +180,11 @@ export function createPlayerStore(options: PlayerStoreOptions): PlayerStore {
     if (persisted.muted && !core.getState().muted) {
       core.toggleMute();
     }
-    // 歌单/歌曲位置一致才恢复进度（避免跨歌单错位 seek）
-    const sameSong =
-      persisted.playlistIndex < state.playlists.length &&
-      persisted.perSongIndex[persisted.playlistIndex] ===
-        state.perSongIndex[persisted.playlistIndex];
-    if (sameSong) {
+    // 恢复到持久化的歌单/歌曲位置（不自动播放；位置无效则忽略）
+    const songs = state.playlists[persisted.playlistIndex];
+    const songIndex = persisted.perSongIndex[persisted.playlistIndex];
+    if (songs && songIndex !== undefined && songIndex >= 0 && songIndex < songs.length) {
+      core.playSong(persisted.playlistIndex, songIndex);
       core.restore(persisted.currentTime);
     }
   }

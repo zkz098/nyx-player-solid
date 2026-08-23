@@ -22,5 +22,12 @@ export default defineConfig({
         "no-await-in-loop": "off",
       },
     },
+    {
+      // 测试文件常定义一次性局部组件/辅助，豁免作用域外提建议
+      files: ["tests/**"],
+      rules: {
+        "consistent-function-scoping": "off",
+      },
+    },
   ],
 });

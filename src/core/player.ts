@@ -172,13 +172,13 @@ export class PlayerCore {
     }
     const current = this.state.perSongIndex[this.state.playlistIndex] ?? 0;
     const last = this.state.perLastIndex[this.state.playlistIndex] ?? 0;
-    let target: number;
     if (this.state.mode === "order" || current === last) {
-      target = (current - 1 + songs.length) % songs.length;
+      // 普通前一首（等价原版 getPrevSong：记录 last 后 -1 回绕）
+      this.switchSong(this.state.playlistIndex, (current - 1 + songs.length) % songs.length);
     } else {
-      target = last;
+      // 回到上次离开的歌曲；不更新 last（修复：原实现把 last 覆盖为当前，多步 prev 来回弹跳）
+      this.switchSong(this.state.playlistIndex, last, false);
     }
-    this.switchSong(this.state.playlistIndex, target);
   }
 
   /** 跳转到目标秒数 */
@@ -297,17 +297,22 @@ export class PlayerCore {
   }
 
   /** 切换歌曲：记录历史、更新索引、换源；切换后按播放状态续播 */
-  private switchSong(playlistIndex: number, songIndex: number): void {
+  /**
+   * 切换歌曲：记录历史、更新索引、换源；切换后按播放状态续播。
+   * @param updateLast 是否把 previous 记为 last（back-to-last 回退场景传 false，保持历史指向不变）
+   */
+  private switchSong(playlistIndex: number, songIndex: number, updateLast = true): void {
     const songs = this.state.playlists[playlistIndex];
     if (!songs) {
       return;
     }
     const previous = this.state.perSongIndex[playlistIndex] ?? 0;
-    const last = songIndex !== previous ? previous : (this.state.perLastIndex[playlistIndex] ?? 0);
     const perSongIndex = [...this.state.perSongIndex];
     perSongIndex[playlistIndex] = songIndex;
     const perLastIndex = [...this.state.perLastIndex];
-    perLastIndex[playlistIndex] = last;
+    if (updateLast) {
+      perLastIndex[playlistIndex] = previous;
+    }
     this.history.push(songIndex);
 
     const wasPlaying = this.state.playing;

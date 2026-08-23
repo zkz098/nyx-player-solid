@@ -3,7 +3,7 @@ import solid from "vite-plugin-solid";
 import UnoCSS from "unocss/vite";
 
 export default defineConfig({
-  plugins: [solid(), UnoCSS()],
+  plugins: [solid(process.env.VITEST ? { hot: false } : undefined), UnoCSS()],
   server: {
     port: 5199,
     strictPort: true,
@@ -16,7 +16,8 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "jsdom",
-    include: ["src/**/*.test.ts", "src/**/*.test.tsx", "tests/**/*.test.ts"],
+    setupFiles: ["./tests/setup.ts"],
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx", "tests/**/*.test.ts", "tests/**/*.test.tsx"],
     coverage: {
       provider: "v8",
       thresholds: {
