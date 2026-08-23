@@ -31,6 +31,8 @@ export interface AudioAdapter {
   getDuration(): number;
   /** 订阅事件，返回取消函数 */
   on(event: AudioAdapterEvent, handler: () => void): () => void;
+  /** 获取 WebAudio 分析节点（R4 8.6 可视化）；环境不支持（SSR/无 AudioContext）返回 null */
+  getContextAnalysis?(): AnalyserNode | null;
   /** 释放资源 */
   dispose(): void;
 }
@@ -43,6 +45,34 @@ export function createHTMLAudioAdapter(element?: HTMLAudioElement): AudioAdapter
   }
   const audio = element ?? new Audio();
   const handlers = new Map<AudioAdapterEvent, Set<() => void>>();
+
+  // ---- R4 8.6 分析链（懒创建，首次 getContextAnalysis 才建 AudioContext） ----
+  let analysis: { analyser: AnalyserNode; context: AudioContext } | null = null;
+
+  const getContextAnalysis = (): AnalyserNode | null => {
+    if (typeof AudioContext === "undefined") {
+      return null;
+    }
+    if (analysis) {
+      return analysis.analyser;
+    }
+    const context = new AudioContext();
+    const analyser = context.createAnalyser();
+    analyser.fftSize = 256;
+    // createMediaElementSource 接管 audio 输出：必须连回 destination，否则静音
+    context.createMediaElementSource(audio).connect(analyser);
+    analyser.connect(context.destination);
+    analysis = { analyser, context };
+    // 用户手势上下文（播放时）最利于恢复；此处尽力而为
+    void context.resume().catch(() => undefined);
+    return analyser;
+  };
+
+  const resumeAnalysisContext = (): void => {
+    if (analysis && analysis.context.state === "suspended") {
+      void analysis.context.resume().catch(() => undefined);
+    }
+  };
 
   const bind = (event: AudioAdapterEvent): void => {
     audio.addEventListener(event, () => {
@@ -69,6 +99,7 @@ export function createHTMLAudioAdapter(element?: HTMLAudioElement): AudioAdapter
     },
     async play() {
       // play() 返回 Promise，可能被 autoplay 策略拒绝
+      resumeAnalysisContext();
       await audio.play();
     },
     pause() {
@@ -100,11 +131,16 @@ export function createHTMLAudioAdapter(element?: HTMLAudioElement): AudioAdapter
         handlers.get(event)?.delete(handler);
       };
     },
+    getContextAnalysis,
     dispose() {
       audio.pause();
       audio.removeAttribute("src");
       audio.load();
       handlers.clear();
+      if (analysis) {
+        void analysis.context.close().catch(() => undefined);
+        analysis = null;
+      }
     },
   };
 }
@@ -123,6 +159,7 @@ export function createNoopAdapter(): AudioAdapter {
     getCurrentTime: () => 0,
     getDuration: () => 0,
     on: () => () => undefined,
+    getContextAnalysis: () => null,
     dispose: () => undefined,
   };
 }

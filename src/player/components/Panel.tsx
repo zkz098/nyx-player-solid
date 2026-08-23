@@ -6,6 +6,7 @@ import { AudioInfo } from "./AudioInfo";
 import { Controller } from "./Controller";
 import { PlaylistTabs } from "./PlaylistTabs";
 import { ProgressBar } from "./ProgressBar";
+import { Visualizer } from "./Visualizer";
 import "../player.css";
 
 interface PanelProps {
@@ -30,6 +31,7 @@ export function Panel(props: PanelProps): JSX.Element {
     >
       <Show when={hasLoaded()} fallback={<div class="nyx-loading">加载歌单中…</div>}>
         <AudioCover />
+        <Visualizer />
         <AudioInfo />
         <ProgressBar />
         <Controller />

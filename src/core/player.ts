@@ -314,6 +314,11 @@ export class PlayerCore {
     return this.history.slice();
   }
 
+  /** 音频分析节点（R4 8.6 可视化透传；适配器未实现/环境不支持返回 null） */
+  getAnalyser(): AnalyserNode | null {
+    return this.adapter.getContextAnalysis?.() ?? null;
+  }
+
   dispose(): void {
     this.disposers.forEach((dispose) => dispose());
     this.disposers.length = 0;

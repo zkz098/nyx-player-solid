@@ -69,6 +69,8 @@ export interface PlayerStore {
   forward(): void;
   clearHistory(): void;
   getHistory(): HistoryEntry[];
+  /** 音频分析节点（无支持环境返回 null） */
+  getAnalyser(): AnalyserNode | null;
 }
 
 function defaultStorage(): StorageLike | null {
@@ -221,6 +223,7 @@ export function createPlayerStore(options: PlayerStoreOptions): PlayerStore {
     forward: () => core.forward(),
     clearHistory: () => core.clearHistory(),
     getHistory: () => core.getHistory(),
+    getAnalyser: () => core.getAnalyser(),
   };
 }
 
