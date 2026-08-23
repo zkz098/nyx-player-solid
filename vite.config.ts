@@ -13,6 +13,24 @@ export default defineConfig({
       "@": "/src",
     },
   },
+  build: {
+    lib: {
+      entry: {
+        index: "src/index.ts",
+        "custom-element": "src/entries/custom-element.tsx",
+      },
+      formats: ["es"],
+      cssFileName: "nyx-player",
+    },
+    rollupOptions: {
+      // 框架打入外部（消费者自带 solid）；solid-element 仅 custom-element 入口用到
+      external: ["solid-js", "solid-js/web", "solid-js/store", "solid-element"],
+      output: {
+        entryFileNames: (chunk: { name: string }) =>
+          chunk.name === "index" ? "nyx-player.js" : `${chunk.name}.js`,
+      },
+    },
+  },
   test: {
     globals: true,
     environment: "jsdom",

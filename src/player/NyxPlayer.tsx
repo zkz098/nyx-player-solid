@@ -1,7 +1,7 @@
 import type { JSX } from "solid-js";
 import { createEffect, createSignal, onCleanup, onMount, Show } from "solid-js";
 import { Portal } from "solid-js/web";
-import type { MetadataProvider, PlaylistSource } from "@/core";
+import type { MetadataProvider, PlaylistSource } from "../core";
 import { resolveExternalButton } from "./external-button";
 import { useExternalButton } from "./external-button";
 import type { ExternalButtonRef } from "./external-button";

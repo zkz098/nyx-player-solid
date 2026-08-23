@@ -1,7 +1,7 @@
 import { createMemo, createResource, For, Show } from "solid-js";
 import type { JSX } from "solid-js";
-import type { LyricLine } from "@/core";
-import { fetchLyricText, findActiveLyricIndex, parseLyric } from "@/core";
+import type { LyricLine } from "../../core";
+import { fetchLyricText, findActiveLyricIndex, parseLyric } from "../../core";
 import { usePlayer } from "../store";
 import { useCurrentSong } from "./useCurrentSong";
 

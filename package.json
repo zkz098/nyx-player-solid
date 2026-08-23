@@ -17,17 +17,36 @@
     "LICENSE"
   ],
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": [
+    "**/*.css"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "browser": "./dist/nyx-player.js",
+      "import": "./dist/ssr/index.js"
+    },
+    "./component": {
+      "types": "./dist/index.d.ts",
+      "browser": "./dist/nyx-player.js",
+      "import": "./dist/ssr/index.js"
+    },
+    "./custom-element": {
+      "types": "./dist/custom-element.d.ts",
+      "browser": "./dist/custom-element.js",
+      "import": "./dist/custom-element.js"
     },
     "./style": "./dist/nyx-player.css"
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node scripts/clean-dist.mjs && pnpm run build:lib && pnpm run build:ssr && pnpm run build:css && pnpm run build:types && pnpm run build:assets && pnpm run build:check:ssr",
+    "build:check:ssr": "node scripts/ssr-check.mjs",
+    "build:lib": "vite build",
+    "build:ssr": "vite build --config vite.ssr.config.ts",
+    "build:css": "unocss \"src/**/*.{ts,tsx}\" -o dist/uno.css && node scripts/merge-css.mjs",
+    "build:types": "tsc -p tsconfig.build.json && node scripts/ship-types.mjs",
+    "build:assets": "node scripts/ship-assets.mjs",
     "preview": "vite preview",
     "check": "tsc -p tsconfig.json --noEmit",
     "lint": "oxlint --type-aware --type-check . --fix",
@@ -48,7 +67,8 @@
     "@playwright/test": "^1.61.1",
     "@solidjs/testing-library": "^0.8.10",
     "@testing-library/jest-dom": "^7.0.1",
-    "@types/node": "^26.2.0",
+    "@types/node": "^26.0.0",
+    "@unocss/cli": "^66.7.4",
     "@unocss/preset-icons": "^66.7.4",
     "jsdom": "^30.0.1",
     "oxfmt": "^0.57.0",

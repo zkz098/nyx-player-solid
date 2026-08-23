@@ -2,8 +2,14 @@ import type { Store } from "solid-js/store";
 import { createStore } from "solid-js/store";
 import type { JSX } from "solid-js";
 import { createContext, onCleanup, useContext } from "solid-js";
-import type { AudioAdapter, MetadataProvider, PlayMode, PlaylistSource, PlayerState } from "@/core";
-import { PlayerCore } from "@/core";
+import type {
+  AudioAdapter,
+  MetadataProvider,
+  PlayMode,
+  PlaylistSource,
+  PlayerState,
+} from "../core";
+import { PlayerCore } from "../core";
 
 const PERSIST_KEY = "nyx-player-solid:state";
 const SAVE_DEBOUNCE_MS = 300;

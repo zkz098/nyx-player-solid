@@ -37,6 +37,10 @@ export interface AudioAdapter {
 
 /** 创建 HTMLAudioElement 适配器（可注入外部元素，便于 E2E 替换与单例复用） */
 export function createHTMLAudioAdapter(element?: HTMLAudioElement): AudioAdapter {
+  if (typeof Audio === "undefined") {
+    // SSR / 无 Web Audio 环境：no-op 适配器保证组件可渲染，播放动作只在 client 生效
+    return createNoopAdapter();
+  }
   const audio = element ?? new Audio();
   const handlers = new Map<AudioAdapterEvent, Set<() => void>>();
 
@@ -102,5 +106,23 @@ export function createHTMLAudioAdapter(element?: HTMLAudioElement): AudioAdapter
       audio.load();
       handlers.clear();
     },
+  };
+}
+
+/** SSR 安全 no-op 适配器：所有动作无效、事件永不触发 */
+export function createNoopAdapter(): AudioAdapter {
+  return {
+    setSrc: () => undefined,
+    async play() {
+      // no-op
+    },
+    pause: () => undefined,
+    seek: () => undefined,
+    setVolume: () => undefined,
+    setMuted: () => undefined,
+    getCurrentTime: () => 0,
+    getDuration: () => 0,
+    on: () => () => undefined,
+    dispose: () => undefined,
   };
 }

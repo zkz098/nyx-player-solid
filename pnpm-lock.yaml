@@ -31,8 +31,11 @@ importers:
         specifier: ^7.0.1
         version: 7.0.1(@testing-library/dom@10.4.1)(vitest@4.1.11(@types/node@26.2.0)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.2.0)(jiti@2.7.0)))
       '@types/node':
-        specifier: ^26.2.0
+        specifier: ^26.0.0
         version: 26.2.0
+      '@unocss/cli':
+        specifier: ^66.7.4
+        version: 66.8.1
       '@unocss/preset-icons':
         specifier: ^66.7.4
         version: 66.8.1

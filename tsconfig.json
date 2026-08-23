@@ -17,7 +17,7 @@
     "allowImportingTsExtensions": true,
     "erasableSyntaxOnly": true,
     "noEmit": true,
-    "types": ["vitest/globals", "@testing-library/jest-dom", "node"],
+    "types": ["vitest/globals", "@testing-library/jest-dom", "node", "vite/client"],
     "paths": {
       "@/*": ["./src/*"]
     }

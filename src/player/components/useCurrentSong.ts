@@ -1,5 +1,5 @@
 import { createMemo } from "solid-js";
-import type { Song } from "@/core";
+import type { Song } from "../../core";
 import { usePlayer } from "../store";
 
 /** 当前歌曲派生（null 时封面区显示占位） */
