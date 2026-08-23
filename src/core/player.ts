@@ -134,6 +134,12 @@ export class PlayerCore {
   }
 
   play(): void {
+    // 修复：直接播放（未触发 playSong/selectPlaylist）时 audio.src 为空 → 永不播放。
+    // 若当前有歌曲但适配器源不一致，先装载当前歌曲再播。
+    const song = currentSongOf(this.state);
+    if (song && this.adapter.getSrc?.() !== song.url) {
+      this.syncSourceToAdapter();
+    }
     this.setState({ playing: true });
     void this.playAudio().catch(() => {
       // autoplay 策略拒绝：静默回退为暂停态，UI 可经此感知

@@ -113,6 +113,20 @@ describe("PlayerCore: next / prev", () => {
     expect(currentSongOf(player.getState())?.name).toBe("s1");
   });
 
+  it("直接 play（未触发 playSong/selectPlaylist）自动装载当前曲目 src（0:00/0:00 永不播放 bug 回归）", async () => {
+    const { player, adapter } = await createPlayer();
+    expect(adapter.src).toBe(""); // init 后未换源
+    player.play();
+    expect(currentSongOf(player.getState())?.name).toBe("s0");
+    expect(adapter.src).toContain("s0.mp3"); // play 前已装载
+    expect(adapter.playing).toBe(true);
+
+    // 已是当前源时不重复 setSrc
+    adapter.src = "";
+    player.play();
+    expect(adapter.src).toContain("s0.mp3");
+  });
+
   it("random mode next stays in bounds", async () => {
     const { player } = await createPlayer();
     player.setMode("random");

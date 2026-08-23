@@ -15,6 +15,8 @@ export type AudioAdapterEvent =
 export interface AudioAdapter {
   /** 切换播放源（不自动播放） */
   setSrc(url: string): void;
+  /** 当前源 URL（尚未设置返回空串） */
+  getSrc?(): string;
   /** 开始播放；受浏览器自动播放策略影响可能被拒绝 */
   play(): Promise<void>;
   /** 暂停 */
@@ -183,6 +185,9 @@ export function createHTMLAudioAdapter(element?: HTMLAudioElement): AudioAdapter
       audio.src = url;
       audio.load();
     },
+    getSrc() {
+      return audio.src ?? "";
+    },
     async play() {
       // play() 返回 Promise，可能被 autoplay 策略拒绝
       resumeAnalysisContext();
@@ -236,6 +241,7 @@ export function createHTMLAudioAdapter(element?: HTMLAudioElement): AudioAdapter
 export function createNoopAdapter(): AudioAdapter {
   return {
     setSrc: () => undefined,
+    getSrc: () => "",
     async play() {
       // no-op
     },

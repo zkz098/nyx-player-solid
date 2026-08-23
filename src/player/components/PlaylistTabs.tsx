@@ -28,8 +28,9 @@ export function PlaylistTabs(): JSX.Element {
   return (
     <div class="playlist">
       <div class="tabs relative block">
-        <div class="nav h-2.6875rem border-b border-[var(--player-border)]">
-          <ul class="flex overflow-x-auto overflow-y-hidden whitespace-nowrap p-0">
+        {/* 滚动容器 = nav（不裁剪 li 底部的 active 色条）；ul 高度撑满 nav */}
+        <div class="nav h-2.6875rem overflow-x-auto overflow-y-hidden border-b border-[var(--player-border)]">
+          <ul class="flex h-full whitespace-nowrap p-0">
             <For each={state.playlistNames}>
               {(name, index) => (
                 <li
@@ -67,9 +68,12 @@ export function PlaylistTabs(): JSX.Element {
                     </Show>
                     <span class="relative z-1 w-full overflow-hidden text-ellipsis">
                       <span class="name float-left">{song.name}</span>
-                      <span class="artist float-right ml-0.625rem text-[var(--secondary-text)]">
-                        {song.artist}
-                      </span>
+                      {/* 当前行右端让位给进度时间（避免与时间文本重叠） */}
+                      <Show when={!isCurrentRow(state.playlistIndex, songIndex())}>
+                        <span class="artist float-right ml-0.625rem text-[var(--secondary-text)]">
+                          {song.artist}
+                        </span>
+                      </Show>
                     </span>
                   </li>
                 )}

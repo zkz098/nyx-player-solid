@@ -15,6 +15,10 @@ export class FakeAudioAdapter implements AudioAdapter {
     this.src = url;
   }
 
+  getSrc(): string {
+    return this.src;
+  }
+
   async play(): Promise<void> {
     this.playing = true;
     this.emit("play");
