@@ -5,7 +5,7 @@ import { AudioCover } from "./AudioCover";
 import { AudioInfo } from "./AudioInfo";
 import { Controller } from "./Controller";
 import { PlaylistTabs } from "./PlaylistTabs";
-import { formatTime } from "./format";
+import { ProgressBar } from "./ProgressBar";
 import "../player.css";
 
 interface PanelProps {
@@ -31,9 +31,7 @@ export function Panel(props: PanelProps): JSX.Element {
       <Show when={hasLoaded()} fallback={<div class="nyx-loading">加载歌单中…</div>}>
         <AudioCover />
         <AudioInfo />
-        <div class="nyx-time">
-          {formatTime(state.currentTime)} / {formatTime(state.duration)}
-        </div>
+        <ProgressBar />
         <Controller />
         <PlaylistTabs />
         <button

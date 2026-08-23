@@ -29,6 +29,50 @@
   color: var(--hover-btn);
 }
 
+.nyx-player .controller .nyx-volume {
+  accent-color: var(--primary-color);
+  cursor: pointer;
+}
+
+/* ---- 进度条（R4 8.2） ---- */
+.nyx-player .nyx-progress {
+  color: var(--secondary-text);
+}
+
+.nyx-player .nyx-progress-track {
+  background: var(--primary-color-a);
+  cursor: pointer;
+  touch-action: none;
+}
+
+.nyx-player .nyx-progress-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+  background: var(--primary-color);
+  pointer-events: none;
+}
+
+.nyx-player .nyx-progress-thumb {
+  position: absolute;
+  top: 50%;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background: var(--primary-color);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.nyx-player .nyx-progress-track:hover .nyx-progress-thumb,
+.nyx-player .nyx-progress.dragging .nyx-progress-thumb {
+  opacity: 1;
+}
+
 /* ---- 唱片 ---- */
 .nyx-player .cover::before {
   content: "";
