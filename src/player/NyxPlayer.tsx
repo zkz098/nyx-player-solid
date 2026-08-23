@@ -1,6 +1,7 @@
 import type { JSX } from "solid-js";
 import { createEffect, createSignal, onCleanup, onMount, Show } from "solid-js";
 import { Portal } from "solid-js/web";
+import { Transition } from "solid-transition-group";
 import type { MetadataProvider, PlaylistSource } from "../core";
 import { resolveExternalButton } from "./external-button";
 import { useExternalButton } from "./external-button";
@@ -101,17 +102,19 @@ export function NyxPlayer(props: NyxPlayerProps): JSX.Element {
 
   return (
     <Portal mount={typeof document !== "undefined" ? document.body : undefined}>
-      <Show when={show()}>
-        {/* Solid 的 Portal 不继承外层 Context，需在 Portal 内重新注入 */}
-        <PlayerProvider store={store}>
-          <Show
-            when={mode() === "panel"}
-            fallback={<MiniBar barRef={setPanelEl} onExpand={() => setMode("panel")} />}
-          >
-            <Panel onClose={() => setShow(false)} panelRef={setPanelEl} />
-          </Show>
-        </PlayerProvider>
-      </Show>
+      <Transition name="slideRight">
+        <Show when={show()}>
+          {/* Solid 的 Portal 不继承外层 Context，需在 Portal 内重新注入 */}
+          <PlayerProvider store={store}>
+            <Show
+              when={mode() === "panel"}
+              fallback={<MiniBar barRef={setPanelEl} onExpand={() => setMode("panel")} />}
+            >
+              <Panel onClose={() => setShow(false)} panelRef={setPanelEl} />
+            </Show>
+          </PlayerProvider>
+        </Show>
+      </Transition>
     </Portal>
   );
 }

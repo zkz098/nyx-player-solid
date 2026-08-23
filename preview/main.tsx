@@ -1,6 +1,7 @@
+import "../src/generated-uno.css";
+
 import { render } from "solid-js/web";
 import { NyxPlayer } from "../src";
-import "virtual:uno.css";
 
 const urls = [
   {

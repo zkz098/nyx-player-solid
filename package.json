@@ -39,7 +39,7 @@
     "./style": "./dist/nyx-player.css"
   },
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/dev.mjs",
     "build": "node scripts/clean-dist.mjs && pnpm run build:lib && pnpm run build:ssr && pnpm run build:css && pnpm run build:types && pnpm run build:assets && pnpm run build:check:ssr",
     "build:check:ssr": "node scripts/ssr-check.mjs",
     "build:lib": "vite build",
@@ -64,7 +64,8 @@
   },
   "dependencies": {
     "solid-element": "^1.9.2",
-    "solid-js": "^1.9.15"
+    "solid-js": "^1.9.15",
+    "solid-transition-group": "^0.3.0"
   },
   "devDependencies": {
     "@iconify-json/ri": "^1.2.10",

@@ -8,6 +8,12 @@ const MODE_ICONS: Record<string, string> = {
   loop: "i-ri:loop-right-line",
 };
 
+/** 导航图标对象值引用（模块图提取对象值稳定，避免静态类漏提） */
+const NAV_ICONS = {
+  prev: "i-ri:skip-back-line",
+  next: "i-ri:skip-forward-line",
+} as const;
+
 /** 音量图标：静音 / 0 / 低 / 高 四态 */
 function volumeIcon(volume: number, muted: boolean): string {
   if (muted || volume <= 0) {
@@ -29,28 +35,38 @@ export function Controller(): JSX.Element {
   return (
     <div class="controller flex cursor-pointer items-center justify-around text-align-center text-sm">
       <button
-        class="mode-btn w-1/6 text-2xl"
+        class="mode-btn flex-1 text-2xl"
         type="button"
         aria-label={`播放模式：${store.state.mode}`}
         onClick={() => store.cycleMode()}
       >
         <span class={modeIcon()} />
       </button>
-      <button class="w-1/6 text-2xl" type="button" aria-label="上一首" onClick={() => store.prev()}>
-        <span class={`i-ri-skip-back-line`} />
+      <button
+        class="flex-1 text-2xl"
+        type="button"
+        aria-label="上一首"
+        onClick={() => store.prev()}
+      >
+        <span class={NAV_ICONS.prev} />
       </button>
       <button
-        class="w-1/6 text-4xl"
+        class="flex-1 text-4xl"
         type="button"
         aria-label={store.state.playing ? "暂停" : "播放"}
         onClick={() => store.toggle()}
       >
         <span class={store.state.playing ? "i-ri:pause-circle-fill" : "i-ri:play-circle-fill"} />
       </button>
-      <button class="w-1/6 text-2xl" type="button" aria-label="下一首" onClick={() => store.next()}>
-        <span class={`i-ri-skip-forward-line`} />
+      <button
+        class="flex-1 text-2xl"
+        type="button"
+        aria-label="下一首"
+        onClick={() => store.next()}
+      >
+        <span class={NAV_ICONS.next} />
       </button>
-      <div class="flex w-2/6 items-center justify-around gap-1">
+      <div class="flex flex-[2] items-center justify-around gap-1">
         <button
           class="min-w-9 text-2xl"
           type="button"

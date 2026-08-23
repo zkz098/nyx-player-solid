@@ -1,5 +1,6 @@
 import { createMemo, createResource, For, Show } from "solid-js";
 import type { JSX } from "solid-js";
+import { TransitionGroup } from "solid-transition-group";
 import type { WordLyricLine } from "../../core";
 import { activeWordIndex, fetchLyricText, findActiveLyricIndex, parseWordLyric } from "../../core";
 import { usePlayer } from "../store";
@@ -60,27 +61,29 @@ export function Lyrics(): JSX.Element {
         <div class="flex justify-center text-3">加载歌词…</div>
       </Show>
       <ul class="p-0">
-        <For each={windowLines()}>
-          {(item) => (
-            <li class="list-none" onClick={() => player.seek(item.line.start)}>
-              <p
-                classList={{ current: item.current }}
-                title={`跳转到 ${formatTime(item.line.start)}`}
-              >
-                <For each={item.line.words}>
-                  {(word, wordIndex) => (
-                    <span
-                      class="word"
-                      classList={{ active: item.current && wordIndex() <= activeWord() }}
-                    >
-                      {word.text}{" "}
-                    </span>
-                  )}
-                </For>
-              </p>
-            </li>
-          )}
-        </For>
+        <TransitionGroup name="list">
+          <For each={windowLines()}>
+            {(item) => (
+              <li class="list-none" onClick={() => player.seek(item.line.start)}>
+                <p
+                  classList={{ current: item.current }}
+                  title={`跳转到 ${formatTime(item.line.start)}`}
+                >
+                  <For each={item.line.words}>
+                    {(word, wordIndex) => (
+                      <span
+                        class="word"
+                        classList={{ active: item.current && wordIndex() <= activeWord() }}
+                      >
+                        {word.text}{" "}
+                      </span>
+                    )}
+                  </For>
+                </p>
+              </li>
+            )}
+          </For>
+        </TransitionGroup>
       </ul>
     </div>
   );

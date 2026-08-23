@@ -10,6 +10,9 @@ interface MiniBarProps {
   barRef?: (el: HTMLDivElement | null) => void;
 }
 
+/** 展开图标（对象值引用，模块图提取稳定） */
+const EXPAND_ICON = "i-ri:arrow-up-double-line";
+
 /**
  * Mini 形态浮条（R4 8.4，复刻原版 FloatingToolbar）：
  * 小封面 + 标题/歌手 + 播放/暂停 + 展开按钮。固定定位样式随静态 CSS 打包。
@@ -46,7 +49,7 @@ export function MiniBar(props: MiniBarProps): JSX.Element {
         <span class={state.playing ? "i-ri:pause-circle-fill" : "i-ri:play-circle-fill"} />
       </button>
       <button class="text-xl" type="button" aria-label="展开播放器" onClick={props.onExpand}>
-        <span class={`i-ri-arrow-up-double-line`} />
+        <span class={EXPAND_ICON} />
       </button>
     </div>
   );

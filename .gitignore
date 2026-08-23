@@ -6,3 +6,4 @@ playwright-report
 .DS_Store
 .vscode
 .idea
+src/generated-uno.css

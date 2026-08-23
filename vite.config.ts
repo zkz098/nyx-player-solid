@@ -1,9 +1,8 @@
 import { defineConfig } from "vitest/config";
 import solid from "vite-plugin-solid";
-import UnoCSS from "unocss/vite";
 
 export default defineConfig({
-  plugins: [solid(process.env.VITEST ? { hot: false } : undefined), UnoCSS()],
+  plugins: [solid(process.env.VITEST ? { hot: false } : undefined)],
   server: {
     port: 5199,
     strictPort: true,

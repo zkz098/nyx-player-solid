@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { silentWav } from "./silent-wav";
 import type { Page } from "@playwright/test";
 
 /**
@@ -6,26 +7,6 @@ import type { Page } from "@playwright/test";
  * 无网络依赖：page.route 拦截 SoundHelix mp3 → 本地生成的 10s 静音 WAV，
  * 使 audio 真正加载出 duration，拖拽/seek 可被验证。
  */
-
-/** 生成 seconds 秒静音 WAV（PCM16 单声道 44.1kHz） */
-function createSilentWav(seconds: number, sampleRate = 44100): Buffer {
-  const dataSize = seconds * sampleRate * 2;
-  const buffer = Buffer.alloc(44 + dataSize);
-  buffer.write("RIFF", 0);
-  buffer.writeUInt32LE(36 + dataSize, 4);
-  buffer.write("WAVE", 8);
-  buffer.write("fmt ", 12);
-  buffer.writeUInt32LE(16, 16);
-  buffer.writeUInt16LE(1, 20); // PCM
-  buffer.writeUInt16LE(1, 22); // 单声道
-  buffer.writeUInt32LE(sampleRate, 24);
-  buffer.writeUInt32LE(sampleRate * 2, 28);
-  buffer.writeUInt16LE(2, 32);
-  buffer.writeUInt16LE(16, 34);
-  buffer.write("data", 36);
-  buffer.writeUInt32LE(dataSize, 40);
-  return buffer; // 数据区全 0（静音）
-}
 
 async function openPlayer(page: Page): Promise<void> {
   await page.goto("/");
@@ -36,7 +17,7 @@ async function openPlayer(page: Page): Promise<void> {
 
 test.beforeEach(async ({ page }) => {
   await page.route("**/*.mp3", (route) => {
-    void route.fulfill({ status: 200, contentType: "audio/wav", body: createSilentWav(10) });
+    void route.fulfill({ status: 200, contentType: "audio/wav", body: silentWav(10) });
   });
 });
 

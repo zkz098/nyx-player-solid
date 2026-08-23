@@ -1,5 +1,42 @@
 /* nyx-player-solid 面板样式（原版 scoped 样式迁移；UnoCSS 工具类之外的少量自定义） */
 
+/* ---- 面板显隐动画（原版 slideRight，Trace solid Transition class 命名） ---- */
+.nyx-player.slideRight-enter-active,
+.nyx-player.slideRight-exit-active {
+  transition:
+    opacity 0.5s ease,
+    transform 0.5s ease;
+}
+
+.nyx-player.slideRight-enter,
+.nyx-player.slideRight-exit-to {
+  opacity: 0;
+  transform: translateX(50%);
+}
+
+/* ---- 歌词行滚动过渡（原版 TransitionGroup name=list） ---- */
+.nyx-player .lrc .list-enter-active,
+.nyx-player .lrc .list-exit-active {
+  transition: all 0.6s ease;
+}
+
+.nyx-player .lrc .list-move {
+  transition: all 0.3s ease;
+}
+
+.nyx-player .lrc .list-enter,
+.nyx-player .lrc .list-exit-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.nyx-player .lrc .list-exit-active {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
 .nyx-player.panel {
   box-shadow: 0 0.625rem 1.875rem -0.9375rem var(--box-bg-shadow);
   background: var(--player-background);
@@ -79,12 +116,14 @@
   content: "";
   position: absolute;
   background: url("/assets/play_needle.avif") no-repeat center / contain;
+  z-index: 2; /* 原版 before:z-1：needle 需在 disc(::after z1) 之上 */
   width: 3.4375rem;
   height: 5.1875rem;
   top: -1.5625rem;
   left: -1.5625rem;
   transform: rotateZ(-60deg);
   transform-origin: 0.625rem 0.625rem;
+  animation: nyx-needle-pause 0.5s 1 normal linear forwards;
 }
 
 .nyx-player .cover .disc {
@@ -126,6 +165,28 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+@keyframes nyx-needle-pause {
+  0% {
+    transform: rotateZ(-35deg);
+  }
+  100% {
+    transform: rotateZ(-60deg);
+  }
+}
+
+@keyframes nyx-needle-resume {
+  0% {
+    transform: rotateZ(-60deg);
+  }
+  100% {
+    transform: rotateZ(-35deg);
+  }
+}
+
+.nyx-player .cover.playing::before {
+  animation: nyx-needle-resume 0.5s 1 normal linear forwards;
 }
 
 .nyx-player .cover-blur-in {

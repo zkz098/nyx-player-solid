@@ -1,5 +1,6 @@
 // NyxPlayer Solid 演示数据 —— 修改此文件可自定义演示歌曲列表
 // 重新执行 `pnpm docs:build`（或 `pnpm docs:demo`）后生效。
+// 第一个歌单走直链（无网络可用）；第二个为网易云测试歌单（经 meting 解析，需网络）。
 window.DEMO_URLS = [
   {
     name: "demo",
@@ -19,5 +20,9 @@ window.DEMO_URLS = [
         lrc: "[00:05.00]<00:05.00>卡拉 <00:05.50>OK <00:06.00>逐字歌词",
       },
     ],
+  },
+  {
+    name: "网易云测试歌单",
+    url: "https://music.163.com/m/playlist?id=12834717281&creatorId=12676493230",
   },
 ];
