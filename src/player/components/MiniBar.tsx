@@ -46,7 +46,7 @@ export function MiniBar(props: MiniBarProps): JSX.Element {
         <span class={state.playing ? "i-ri:pause-circle-fill" : "i-ri:play-circle-fill"} />
       </button>
       <button class="text-xl" type="button" aria-label="展开播放器" onClick={props.onExpand}>
-        <span class="i-ri:expand-up-line" />
+        <span class={`i-ri-arrow-up-double-line`} />
       </button>
     </div>
   );

@@ -37,7 +37,7 @@ export function Controller(): JSX.Element {
         <span class={modeIcon()} />
       </button>
       <button class="w-1/6 text-xl" type="button" aria-label="上一首" onClick={() => store.prev()}>
-        <span class="i-ri:skip-back-line" />
+        <span class={`i-ri-skip-back-line`} />
       </button>
       <button
         class="w-1/6 text-4xl"
@@ -48,7 +48,7 @@ export function Controller(): JSX.Element {
         <span class={store.state.playing ? "i-ri:pause-circle-fill" : "i-ri:play-circle-fill"} />
       </button>
       <button class="w-1/6 text-xl" type="button" aria-label="下一首" onClick={() => store.next()}>
-        <span class="i-ri:skip-forward-line" />
+        <span class={`i-ri-skip-forward-line`} />
       </button>
       <div class="flex w-2/6 items-center justify-around gap-1">
         <button
