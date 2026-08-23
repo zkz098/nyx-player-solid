@@ -86,6 +86,8 @@ export class PlayerCore {
   /** 歌曲索引历史栈（原版 lastIdx 单值升级，R4 8.5 播放历史）。含歌单维度；cursor 指向当前播放条目 */
   private history: HistoryEntry[] = [];
   private historyCursor = -1; // -1 = 尚未初始化（当前播放的是初始歌曲）
+  /** 歌单未就绪时点击播放的排队标记（init 完成后自动开始） */
+  private pendingPlay = false;
 
   constructor(options: PlayerCoreOptions = {}) {
     this.adapter = options.adapter ?? createHTMLAudioAdapter();
@@ -131,9 +133,22 @@ export class PlayerCore {
       loading: false,
       error: failed > 0 ? `${failed} 个歌单加载失败` : null,
     });
+    // 歌单就绪后，若曾有排队播放请求则自动开始（初期点播的 0:00/0:00 场景）
+    if (this.pendingPlay) {
+      this.pendingPlay = false;
+      this.play();
+    }
   }
 
   play(): void {
+    const songs = this.currentSongs();
+    if (songs.length === 0) {
+      // 歌单未就绪（init 加载中/失败）：标记待播，init 完成后自动开始；UI 立即反馈播放态
+      this.pendingPlay = true;
+      this.setState({ playing: true });
+      return;
+    }
+    this.pendingPlay = false;
     // 修复：直接播放（未触发 playSong/selectPlaylist）时 audio.src 为空 → 永不播放。
     // 若当前有歌曲但适配器源不一致，先装载当前歌曲再播。
     const song = currentSongOf(this.state);

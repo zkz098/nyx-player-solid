@@ -28,13 +28,13 @@ export function PlaylistTabs(): JSX.Element {
   return (
     <div class="playlist">
       <div class="tabs relative block">
-        {/* 滚动容器 = nav（不裁剪 li 底部的 active 色条）；ul 高度撑满 nav */}
+        {/* 滚动容器 = nav（ul 撑满 nav 高度，li 不超高 → ::before 色条不被裁剪） */}
         <div class="nav h-2.6875rem overflow-x-auto overflow-y-hidden border-b border-[var(--player-border)]">
-          <ul class="flex h-full whitespace-nowrap p-0">
+          <ul class="m-0 flex h-full whitespace-nowrap p-0">
             <For each={state.playlistNames}>
               {(name, index) => (
                 <li
-                  class="relative m-0 inline-block cursor-pointer border-none p-0.3125rem-1.25rem"
+                  class="relative m-0 inline-flex cursor-pointer items-center border-none px-1.25rem"
                   classList={{ active: index() === state.playlistIndex }}
                   data-index={index()}
                   onClick={() => store.selectPlaylist(index())}

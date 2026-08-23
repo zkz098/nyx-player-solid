@@ -127,6 +127,17 @@ describe("PlayerCore: next / prev", () => {
     expect(adapter.src).toContain("s0.mp3");
   });
 
+  it("歌单未就绪（init 前）play 排队，init 完成后自动开始（0:00/0:00 场景）", async () => {
+    const adapter = new FakeAudioAdapter();
+    const player = new PlayerCore({ adapter, provider: directProvider(twoLists) });
+    player.play(); // init 前：playlists 为空占位
+    expect(player.getState().playing).toBe(true);
+    expect(adapter.playing).toBe(false); // 未真正播放
+    await player.init(playlistSources(2));
+    expect(adapter.playing).toBe(true); // init 完成自动开始
+    expect(adapter.src).toContain("s0.mp3");
+  });
+
   it("random mode next stays in bounds", async () => {
     const { player } = await createPlayer();
     player.setMode("random");

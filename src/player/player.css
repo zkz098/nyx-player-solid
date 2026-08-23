@@ -175,14 +175,21 @@
   border-top: 0.125rem solid var(--playlist-line);
 }
 
-.nyx-player .tabs .nav li {
-  line-height: 2.6875rem; /* 撑满 nav 高度，色条用 li 底边（不被滚动容器裁剪） */
+.nyx-player .tabs .nav li::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  right: 50%;
+  top: 1.75rem;
+  bottom: 0;
+  transition: all 0.2s ease-in-out;
   border-bottom: 0.125rem solid transparent;
-  transition: border-color 0.2s ease-in-out;
 }
 
-.nyx-player .tabs .nav li.active {
+.nyx-player .tabs .nav li.active::before {
   border-bottom-color: var(--primary-color);
+  left: 0;
+  right: 0;
 }
 
 .nyx-song-list {
