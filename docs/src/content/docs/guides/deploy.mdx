@@ -1,0 +1,46 @@
+---
+title: 部署
+description: Cloudflare Pages 部署指南与构建命令。
+---
+
+文档站是纯静态站点（`output: "static"`），无 SSR 适配器要求，任意静态托管平台可部署。以下以 **Cloudflare Pages** 为例（也可直接套用到 Netlify / Vercel / GitHub Pages）。
+
+## GitHub 仓库集成（推荐）
+
+1. Cloudflare 控制台 → **Workers & Pages → Create → Pages → Connect to Git**
+2. 选择仓库，构建配置：
+   - **Framework preset**: None（或 Astro，若已识别）
+   - **Build command**: `pnpm docs:build`
+   - **Build output directory**: `docs/dist`
+   - **Root directory**: *（仓库根，`pnpm docs:build` 会先构建播放器产物再构建文档站）*
+
+3. 首次部署后可在 **Custom domains** 绑定域名。
+
+## 本地构建与预览
+
+```bash
+pnpm install
+pnpm build        # 播放器 dist 产物（demo 页依赖）
+pnpm docs:build   # 文档站 → docs/dist
+pnpm docs:preview # 本地预览构建结果
+```
+
+## 环境变量
+
+| 变量 | 用途 |
+| --- | --- |
+| `CLOUDFLARE_PAGES_URL` | 部署域覆盖（Cloudflare 自动注入 `*.pages.dev` 域名） |
+
+`astro.config.mjs` 读取它作为 `site`，保证构建期生成的 sitemap / canonical 指向正确域名。
+
+## CLI 手动部署（可选）
+
+```bash
+# 需要 wrangler CLI 与 Pages 项目
+pnpm dlx wrangler pages deploy docs/dist --project-name nyx-player-solid
+```
+
+## 托管注意事项
+
+- `public/demo/` 下的播放器产物（`dist/*.js/css` 拷贝）由构建脚本生成，属构建产物，勿手动提交
+- 若走 CDN 强缓存，建议对 `demo/nyx-player.*.js` 设置不缓存或短缓存（文件名不带 hash，改版需刷新）

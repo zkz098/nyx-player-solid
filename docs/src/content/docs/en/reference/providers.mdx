@@ -1,0 +1,87 @@
+---
+title: Metadata Providers
+description: direct / meting / composite and URL parsing.
+---
+
+`MetadataProvider` resolves a `PlaylistSource` into playable `Song[]`. Three built-in providers:
+
+```ts
+interface MetadataProvider {
+  readonly name: string;
+  match(source: PlaylistSource): boolean;
+  fetchSongs(source: PlaylistSource): Promise<Song[]>;
+}
+```
+
+## directProvider
+
+```ts
+import { directProvider } from "nyx-player-solid";
+
+// singleton: consumes source.songs directly, no network
+```
+
+## createMetingProvider (music sources)
+
+Resolves playlist URLs (Netease / QQ Music etc.) through the meting API:
+
+```ts
+import { createMetingProvider } from "nyx-player-solid";
+
+const provider = createMetingProvider({
+  baseURL: "https://api.injahow.cn/meting/", // self-hosted endpoints welcome
+  timeoutMs: 10_000,
+  maxRetries: 3,
+});
+```
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `baseURL` | `https://api.injahow.cn/meting/` | meting API endpoint; self-hosted supported (e.g. `https://your-host/meting/`) |
+| `timeoutMs` | `10_000` | Per-request timeout |
+| `maxRetries` | `3` | Max retries (exponential backoff) |
+| `fetchImpl` | `globalThis.fetch` | fetch implementation (test injection) |
+
+## createCompositeProvider
+
+Combines providers in `match` order; one failure doesn't block the rest:
+
+```ts
+import { createCompositeProvider, directProvider, createMetingProvider } from "nyx-player-solid";
+
+const provider = createCompositeProvider([directProvider, createMetingProvider()]);
+// <NyxPlayer provider={provider} urls={...} />
+```
+
+`<NyxPlayer>` defaults to this combination.
+
+## URL parsing
+
+```ts
+import { parsePlaylistUrl, hasPlaylistURL } from "nyx-player-solid";
+
+const result = parsePlaylistUrl("https://music.163.com/#/playlist?id=123");
+// { id: "123", provider: "netease", type: "playlist" }
+// type: "song" | "album" | "artist" | "playlist"
+```
+
+- Supports Netease `music.163.com` and QQ Music `y.qq.com` / `i.y.qq.com`
+- `hasPlaylistURL(source)`: whether `source.url` is a recognizable playlist URL
+
+## Custom providers
+
+```ts
+import type { MetadataProvider } from "nyx-player-solid";
+
+const myProvider: MetadataProvider = {
+  name: "my-source",
+  match: (source) => source.url?.startsWith("https://my-music.example/") ?? false,
+  async fetchSongs(source) {
+    const res = await fetch(source.url!);
+    const json = await res.json();
+    return json.songs.map(/* → Song[] */);
+  },
+};
+
+<NyxPlayer urls={urls} provider={myProvider} />;
+```

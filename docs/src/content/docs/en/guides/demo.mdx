@@ -1,0 +1,33 @@
+---
+title: Live Demo
+description: Try the player right here (the iframe loads real build artifacts).
+---
+
+The iframe below loads **real release artifacts** (the post-build custom element entry + static CSS) — fully interactive.
+
+<iframe
+  src="/demo/index.html"
+  title="NyxPlayer Solid live demo"
+  style="width: 100%; height: 420px; border: 1px solid var(--theme-600, #888); border-radius: 8px"
+></iframe>
+
+> Demo data uses public sample audio (SoundHelix); without network the audio is unavailable but the player UI and interactions remain fully functional.
+
+## Running the docs locally
+
+```bash
+# 1. build the player artifacts first (demo page needs dist)
+pnpm build
+# 2. start the docs
+pnpm docs:dev        # http://localhost:4321
+```
+
+## Customizing demo data
+
+The demo sources live in `docs/static/demo/`; the build script `scripts/build-demo.mjs`:
+
+1. Verifies `dist/` artifacts exist (hints `pnpm build` otherwise)
+2. Copies `dist/nyx-player.js` / `dist/nyx-player.css` into the docs static dir
+3. Generates `index.html` (references the copied artifacts + your config)
+
+Edit `docs/static/demo/sources.js` (the track list) and re-run `pnpm docs:build`.

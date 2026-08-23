@@ -1,0 +1,78 @@
+---
+title: Core API
+description: PlayerCore、AudioAdapter、歌词解析等框架无关核心的参考。
+---
+
+core 层为框架无关模块（不依赖 solid-js / DOM），可通过 `nyx-player-solid` 顶层入口引用。
+
+## PlayerCore
+
+播放状态机（单向数据流：动作 → setState → notify；audio 副作用内聚，无事件总线）。
+
+```ts
+const core = new PlayerCore({ adapter?, provider?, initialMode?, initialVolume? });
+await core.init(sources);
+core.play(); core.pause(); core.toggle();
+core.next(); core.prev();
+core.seek(30); core.setMode("random"); core.cycleMode();
+core.setVolume(0.5); core.toggleMute();
+core.selectPlaylist(1); core.playSong(1, 2);
+core.back(); core.forward(); core.clearHistory();
+const state = core.getState();
+const unsubscribe = core.subscribe((next) => ...);
+```
+
+### PlayerState 字段
+
+`playing` / `currentTime` / `duration` / `mode`(`order|random|loop`) / `playlists` / `playlistNames` / `playlistIndex` / `perSongIndex` / `perLastIndex` / `volume` / `muted` / `loading` / `error`。
+
+### 当前歌曲
+
+```ts
+import { currentSongOf } from "nyx-player-solid";
+const song = currentSongOf(core.getState()); // Song | null
+```
+
+### 播放历史
+
+`getHistory(): HistoryEntry[]`，`HistoryEntry = { playlistIndex, songIndex }`。back/forward 为浏览器式导航；主动切歌（next/prev/playSong）丢弃前进分支。
+
+## AudioAdapter
+
+`AudioAdapter` 是唯一允许触摸真实音频引擎的层（默认 `HTMLAudioAdapter`；测试/自定义可注入）。
+
+```ts
+interface AudioAdapter {
+  setSrc(url: string): void;
+  play(): Promise<void>;            // 可能被自动播放策略拒绝
+  pause(): void;
+  seek(time: number): void;
+  setVolume(v: number): void;
+  setMuted(m: boolean): void;
+  getCurrentTime(): number;
+  getDuration(): number;
+  on(event: AudioAdapterEvent, handler: () => void): () => void;
+  getContextAnalysis?(): AnalyserNode | null; // R4：可视化
+  dispose(): void;
+}
+```
+
+事件：`timeupdate` / `ended` / `error` / `loadedmetadata` / `play` / `pause`。
+
+## 歌词解析
+
+| 函数 | 说明 |
+| --- | --- |
+| `parseLyric(text)` | 标准 LRC → `LyricLine[]`（`{ text, start, end }`，end 自动衔接） |
+| `parseLyricLine(line)` | 单行时间戳 → 秒（非法抛错） |
+| `findActiveLyricIndex(lines, time)` | 定位活动行（线性查找，末尾回退最后一行） |
+| `parseWordLyric(text)` | LLRC 词级时间戳 → `WordLyricLine[]`（无词级标签自动退化整词，**兼容纯 LRC**） |
+| `activeWordIndex(words, time)` | 卡拉 OK：最后活动词索引 |
+| `fetchLyricText(urlOrText)` | URL 拉取 / 内联文本直返（有界缓存，超时 8s） |
+
+## 其他工具
+
+- `runWithPool(items, limit, fn)` / `ConcurrencyPool`：并发受限执行（歌单拉取用）
+- `parsePlaylistUrl(url)` / `hasPlaylistURL(url)`：歌单 URL 定位（netease / tencent）
+- `createHTMLAudioAdapter(element?)`：浏览器音频适配器（可注入已存在 `<audio>`）
+- `createNoopAdapter()`：SSR 安全空实现

@@ -1,0 +1,77 @@
+---
+title: SSR / 集成
+description: 服务端渲染安全与 Astro 等框架集成示例。
+---
+
+NyxPlayer 提供 **双构建产物**：`browser` 条件指向 client DOM 版本，`import` 条件（Node/SSR 环境）指向 SSR 版本。SSR 版本中 `createPlayerStore` 自动降级为 no-op 音频适配器、无 `navigator` / `Audio` / `storage` 依赖，`renderToString` 渲染**零客户端 API 报错**（输出空串，播放器在客户端水合后挂载）。
+
+```js
+// package.json exports（内置）
+{
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "browser": "./dist/nyx-player.js",
+      "import": "./dist/ssr/index.js"
+    },
+    ...
+  }
+}
+```
+
+## Astro 集成示例
+
+### 1. 组件用 Astro 包一层（CSR）
+
+```astro
+---
+// src/components/NyxPlayer.astro
+import { NyxPlayer } from "nyx-player-solid";
+import "nyx-player-solid/style";
+const { urls } = Astro.props;
+---
+
+<client:only="solid">
+  <NyxPlayer urls={urls} showBtn="#show" playBtn="#play" />
+  <button id="show">播放器</button>
+  <button id="play">播放/暂停</button>
+</client:only>
+```
+
+> `client:only` 保证组件只在客户端渲染，SSR 阶段不会触碰客户端 API；配合 built-in 的 `browser`/`import` 双产物，`astro build` 的静态输出也安全。
+
+### 2. 自定义元素方式（零 JS 集成）
+
+在布局头部引入产物后直接写标签：
+
+```html
+<!-- src/layouts/Base.astro -->
+<script>
+  import "nyx-player-solid/custom-element";
+  import "nyx-player-solid/style";
+</script>
+
+<nyx-player config='{"urls": [...], "showBtn": "#show"}' />
+```
+
+## 手动控制实例（createPlayerStore）
+
+SSR 安全的实例化（如需要非组件场景）：
+
+```tsx
+import { createPlayerStore, PlayerProvider } from "nyx-player-solid";
+
+export const store = createPlayerStore({ sources });
+// <PlayerProvider store={store}>...</PlayerProvider>
+// store.init() 需在客户端挂载后调用一次（内部已有 navigator/storage 守卫）
+```
+
+持久化默认 `sessionStorage`；SSR 或禁用时传 `persist: false`（或自定义 `StorageLike`）。
+
+## 验证 SSR 安全
+
+仓库内置 `scripts/ssr-check.mjs`：用 `dist/ssr` 产物在 Node 中执行 `renderToString`，断言无客户端 API 报错。任何改动后可运行：
+
+```bash
+pnpm build   # 内部包含 ssr-check
+```

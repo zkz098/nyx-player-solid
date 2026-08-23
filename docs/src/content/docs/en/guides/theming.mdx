@@ -1,0 +1,91 @@
+---
+title: Theming
+description: Presets, token overrides and dark mode support.
+---
+
+The theming system is built on **tokenized CSS variables**: every panel color derives from a set of tokens; presets and custom overrides are deep-merged and injected into `:root` (or a target container).
+
+## Presets
+
+| Preset | Primary | Hover |
+| --- | --- | --- |
+| `nyx` (default) | `rgb(10, 116, 38)` | `rgb(10, 116, 38)` |
+| `shokax` | `rgb(233, 84, 107)` | `#ed6ea0` |
+
+```tsx
+<NyxPlayer urls={urls} preset="shokax" />
+```
+
+## Custom token overrides
+
+`styles` deep-merges `light` / `dark` token groups (returns a **new object**, never mutates presets):
+
+```tsx
+<NyxPlayer
+  urls={urls}
+  styles={{
+    styles: {
+      light: { primary: "rgb(80, 140, 220)", hoverBtn: "#2d6cdf" },
+      dark: { primary: "rgb(120, 180, 255)", hoverBtn: "#5ea2ff" },
+    },
+  }}
+/>
+```
+
+### All tokens
+
+| Token | Purpose |
+| --- | --- |
+| `background` | Panel background |
+| `border` | Panel border |
+| `closeBtn` | Close button color |
+| `primaryText` / `secondaryText` | Primary / secondary text |
+| `playlistLine` | Playlist divider |
+| `hoverBtn` | Hover accent |
+| `shadow` | Panel shadow |
+| `primary` / `primaryRgb` | Primary color (`rgb(...)`) and its RGB components |
+
+```ts
+interface ThemeTokens {
+  background: string;
+  border: string;
+  closeBtn: string;
+  primaryText: string;
+  secondaryText: string;
+  playlistLine: string;
+  hoverBtn: string;
+  shadow: string;
+  primary: string;
+  primaryRgb: string;
+}
+```
+
+## Dark mode
+
+| Value | Behavior |
+| --- | --- |
+| `"auto"` | Follows system `prefers-color-scheme` |
+| CSS selector (e.g. `html[data-theme='dark']`) | Target exists = dark; `MutationObserver` tracks attribute changes in real time |
+
+```tsx
+// follow the system
+<NyxPlayer urls={urls} darkModeTarget="auto" />
+
+// follow a blog's data-theme attribute
+<NyxPlayer urls={urls} darkModeTarget="html[data-theme='dark']" />
+```
+
+## Programmatic theming
+
+```ts
+import { presets, resolveTheme, applyThemeTokens, useTheme } from "nyx-player-solid";
+
+// resolve (deep-merged, new object)
+const theme = resolveTheme({ preset: "shokax", custom: styles });
+
+// apply to a container
+applyThemeTokens(document.documentElement, theme.styles.light);
+
+// Solid hook: follows the dark-mode signal and injects CSS variables
+useTheme({ preset, custom, darkModeTarget });
+```

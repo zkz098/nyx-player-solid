@@ -1,0 +1,87 @@
+---
+title: 元数据 Provider
+description: direct / meting / composite 与 URL 解析。
+---
+
+`MetadataProvider` 把 `PlaylistSource` 解析为可播放的 `Song[]`。内置三种：
+
+```ts
+interface MetadataProvider {
+  readonly name: string;
+  match(source: PlaylistSource): boolean;
+  fetchSongs(source: PlaylistSource): Promise<Song[]>;
+}
+```
+
+## directProvider（直链）
+
+```ts
+import { directProvider } from "nyx-player-solid";
+
+// 单例：直接消费 source.songs 数组，无网络请求
+```
+
+## createMetingProvider（音乐源）
+
+通过 meting API 解析歌单 URL（网易云 / QQ 音乐等）：
+
+```ts
+import { createMetingProvider } from "nyx-player-solid";
+
+const provider = createMetingProvider({
+  baseURL: "https://api.injahow.cn/meting/", // 可改自托管端点
+  timeoutMs: 10_000,
+  maxRetries: 3,
+});
+```
+
+| 选项 | 默认值 | 说明 |
+| --- | --- | --- |
+| `baseURL` | `https://api.injahow.cn/meting/` | meting API 端点；支持自托管（如 `https://your-host/meting/`） |
+| `timeoutMs` | `10_000` | 单次请求超时 |
+| `maxRetries` | `3` | 最大重试（指数退避） |
+| `fetchImpl` | `globalThis.fetch` | fetch 实现（测试注入） |
+
+## createCompositeProvider（组合）
+
+把多个 provider 按 `match` 顺序组合，失败一个不阻塞整体：
+
+```ts
+import { createCompositeProvider, directProvider, createMetingProvider } from "nyx-player-solid";
+
+const provider = createCompositeProvider([directProvider, createMetingProvider()]);
+// <NyxPlayer provider={provider} urls={...} />
+```
+
+`<NyxPlayer>` 默认即此组合。
+
+## URL 解析
+
+```ts
+import { parsePlaylistUrl, hasPlaylistURL } from "nyx-player-solid";
+
+const result = parsePlaylistUrl("https://music.163.com/#/playlist?id=123");
+// { id: "123", provider: "netease", type: "playlist" }
+// type: "song" | "album" | "artist" | "playlist"
+```
+
+- 支持网易云 `music.163.com`、QQ 音乐 `y.qq.com` / `i.y.qq.com`
+- `hasPlaylistURL(source)`：判断 `source.url` 是否为可识别的歌单 URL
+
+## 自定义 Provider
+
+```ts
+import type { MetadataProvider } from "nyx-player-solid";
+
+const myProvider: MetadataProvider = {
+  name: "my-source",
+  match: (source) => source.url?.startsWith("https://my-music.example/") ?? false,
+  async fetchSongs(source) {
+    const res = await fetch(source.url!);
+    const json = await res.json();
+    return json.songs.map(/* → Song[] */);
+  },
+};
+
+<NyxPlayer urls={urls} provider={myProvider} />;
+```

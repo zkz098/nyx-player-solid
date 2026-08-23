@@ -1,0 +1,76 @@
+---
+title: Custom Element
+description: 无构建环境用 <nyx-player> 标签接入播放器。
+---
+
+自定义元素入口为任意页面（HTML / Hexo / 静态博客 / 文档站）提供零构建接入：`<nyx-player>` 标签自动注册，**配置经 `config` 属性（JSON 字符串）或 `.config` property 传入**。
+
+## 引入资源
+
+```html
+<script type="module" src="https://unpkg.com/nyx-player-solid/custom-element"></script>
+<link rel="stylesheet" href="https://unpkg.com/nyx-player-solid/style" />
+```
+
+本地打包（发布目录）时对应：
+
+```html
+<script type="module" src="./node_modules/nyx-player-solid/custom-element.js"></script>
+<link rel="stylesheet" href="./node_modules/nyx-player-solid/nyx-player.css" />
+```
+
+## 基本用法
+
+```html
+<nyx-player
+  config='{
+    "urls": [
+      {
+        "name": "demo",
+        "songs": [
+          { "name": "歌名", "artist": "歌手", "url": "/audio/song.mp3", "pic": "/cover.jpg", "lrc": "[00:00.00]歌词" }
+        ]
+      }
+    ],
+    "showBtn": "#show",
+    "playBtn": "#play",
+    "preset": "shokax",
+    "darkModeTarget": "html[data-theme='dark']"
+  }'
+></nyx-player>
+```
+
+顶部 `config` JSON 支持 `urls` / `showBtn` / `playBtn` / `darkModeTarget` / `preset` / `persist` 字段。
+
+## 常用属性
+
+| 属性 | 说明 |
+| --- | --- |
+| `config` | JSON 序列化的完整配置（优先级最高） |
+| `urls` | JSON 序列化的 `PlaylistSource[]`（与 config 二选一） |
+| `showBtn` / `playBtn` | 外部按钮 selector |
+| `darkModeTarget` / `preset` | 主题相关 |
+
+复杂值（`styles`、`provider`）无法经 JSON attribute 表达，请通过 property 赋值：
+
+```js
+const el = document.querySelector("nyx-player");
+el.config = {
+  urls: [...],
+  styles: { styles: { light: { primary: "rgb(233, 84, 107)" } } },
+};
+```
+
+## 手动注册
+
+模块加载时自动注册 `<nyx-player>`；如需自定义标签或多实例注册：
+
+```ts
+import { registerNyxPlayerElement } from "nyx-player-solid/custom-element";
+
+registerNyxPlayerElement();
+```
+
+## SSR / 无 Web Components 环境
+
+`customElements` 不存在时（SSR、老浏览器）注册被静默跳过，不抛错。

@@ -1,0 +1,79 @@
+---
+title: Quick Start
+description: Install, minimal usage and page integration.
+---
+
+## Installation
+
+```bash
+pnpm add nyx-player-solid
+# or
+npm install nyx-player-solid
+```
+
+Only `solid-js` and `solid-element` (custom element entry) are dependencies; the stylesheet ships as prebuilt static CSS.
+
+## Usage in a Solid project
+
+```tsx
+import { NyxPlayer } from "nyx-player-solid";
+import "nyx-player-solid/style";
+
+const songs = [
+  {
+    name: "Demo track 1",
+    artist: "demo",
+    url: "https://example.com/song1.mp3",
+    pic: "https://example.com/cover1.jpg",
+    lrc: "[00:00.00]First line\n[00:10.00]Second line",
+  },
+];
+
+export function Player() {
+  return (
+    <NyxPlayer
+      urls={[{ name: "demo", songs }]}
+      showBtn="#show" // toggle button on your page (selector)
+      playBtn="#play" // play/pause button on your page
+      preset="shokax"
+    />
+  );
+}
+```
+
+Provide the two external buttons on your page:
+
+```html
+<button id="show">Show / Hide player</button>
+<button id="play">Play / Pause</button>
+```
+
+> External buttons also accept an `HTMLElement` or an element-returning function — see [Component API](/en/guides/component-api/).
+
+## No-build usage via script tag
+
+The `<nyx-player>` custom element entry works without a build step:
+
+```html
+<script type="module" src="https://unpkg.com/nyx-player-solid/custom-element"></script>
+<link rel="stylesheet" href="https://unpkg.com/nyx-player-solid/style" />
+
+<nyx-player
+  config='{
+    "urls": [
+      { "name": "demo", "songs": [{ "name": "Track", "artist": "Artist", "url": "https://example.com/a.mp3", "pic": "", "lrc": "" }] }
+    ],
+    "showBtn": "#show",
+    "playBtn": "#play"
+  }'
+></nyx-player>
+```
+
+See the [Custom Element guide](/en/guides/custom-element/).
+
+## Next steps
+
+- [Component API](/en/guides/component-api/) — full props and store methods
+- [Theming](/en/guides/theming/) — presets and token overrides
+- [SSR Integration](/en/guides/ssr/) — Astro/Next usage
+- [Live Demo](/en/guides/demo/) — try the player

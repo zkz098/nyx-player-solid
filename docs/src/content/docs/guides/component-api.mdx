@@ -1,0 +1,94 @@
+---
+title: 组件 API
+description: NyxPlayerProps 与 PlayerStore 完整参考。
+---
+
+## `<NyxPlayer>` Props
+
+| Prop | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `urls` | `PlaylistSource[]` | — | 歌单来源列表（URL 歌单 / 直链歌曲，二选一） |
+| `showBtn` | `ExternalButtonRef` | — | 页面自定义"显示/隐藏"按钮：`string`（selector）/ `HTMLElement` / 元素函数 |
+| `playBtn` | `ExternalButtonRef` | — | 页面自定义"播放/暂停"按钮，同上 |
+| `darkModeTarget` | `DarkModeTarget` | — | 深色模式跟随：`"auto"`（系统偏好）或 CSS 选择器（存在即深色，博客 `data-theme` 场景） |
+| `preset` | `string` | `"nyx"` | 颜色预设名：`nyx` / `shokax` |
+| `styles` | `Partial<ThemePreset>` | — | 自定义颜色 token 覆盖（深合并，不污染预设） |
+| `provider` | `MetadataProvider` | composite | 元数据 provider（direct + meting 组合） |
+| `persist` | `boolean \| StorageLike` | true | 跨页持久化开关或自定义 storage 适配器 |
+| `mode` | `"panel" \| "mini"` | `"panel"` | 初始形态：完整面板或 Mini 浮条 |
+
+### `PlaylistSource`
+
+```ts
+interface PlaylistSource {
+  /** 歌单展示名 */
+  name: string;
+  /** 歌单 URL（网易云 / QQ 音乐等，走 URL 解析） */
+  url?: string;
+  /** 直链歌曲列表（不走解析，直接播放） */
+  songs?: Song[];
+}
+```
+
+### `Song`
+
+```ts
+interface Song {
+  name: string;   // 歌曲名
+  artist: string; // 歌手
+  url: string;    // 音频直链
+  pic: string;    // 封面图 URL
+  lrc: string;    // 歌词（LRC 文本或 LRC 文本地址）
+}
+```
+
+## PlayerStore —— 编程式控制
+
+通过 `createPlayerStore` 创建实例（工厂 + Context 注入，多实例隔离），或用 `usePlayer()` 在 `<PlayerProvider>` 内获取：
+
+```tsx
+import { createPlayerStore, PlayerProvider, usePlayer } from "nyx-player-solid";
+
+const store = createPlayerStore({ sources });
+
+function Consumer() {
+  const player = usePlayer();
+  return (
+    <button onClick={() => player.toggle()}>
+      {player.state.playing ? "暂停" : "播放"}
+    </button>
+  );
+}
+```
+
+### 方法
+
+| 方法 | 说明 |
+| --- | --- |
+| `init()` | 并发拉取歌单 + 应用持久化恢复（挂载后调用一次） |
+| `play()` / `pause()` / `toggle()` | 播放 / 暂停 / 切换 |
+| `next()` / `prev()` | 下一首 / 上一首（order 下 prev 支持回退到上次离开的歌曲） |
+| `seek(time)` | 跳转到指定秒 |
+| `setMode(mode)` / `cycleMode()` | 设置 / 循环切换播放模式（order → random → loop） |
+| `setVolume(v)` / `toggleMute()` | 音量（0-1）与静音 |
+| `selectPlaylist(i)` / `playSong(pl, song)` | 切换歌单 / 播放指定歌曲 |
+| `back()` / `forward()` / `clearHistory()` / `getHistory()` | 播放历史：后退 / 前进 / 清空 / 读取 |
+| `getAnalyser()` | 音频分析节点（无支持环境返回 null，见[扩展功能](/guides/extend/)） |
+
+### `state` 字段（细粒度订阅）
+
+`state` 是 Solid store：读取 `state.xxx` 只随该字段变化重算。主要字段：`playing`、`currentTime`、`duration`、`mode`、`playlists`、`playlistNames`、`playlistIndex`、`perSongIndex`、`perLastIndex`、`volume`、`muted`、`loading`、`error`。
+
+## 持久化
+
+默认使用 `sessionStorage` 保存播放现场（播放状态、进度、模式、位置、音量——**歌单内容不落盘**）：
+
+```tsx
+// 关闭持久化
+<NyxPlayer urls={urls} persist={false} />
+
+// 自定义 storage
+<NyxPlayer urls={urls} persist={{ getItem: ..., setItem: ... }} />
+```
+
+`StorageLike` 接口：`{ getItem(key): string | null; setItem(key, value): void }`。

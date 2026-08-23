@@ -1,0 +1,75 @@
+---
+title: SSR Integration
+description: Server-side rendering safety and Astro integration examples.
+---
+
+NyxPlayer ships **dual build outputs**: the `browser` condition points to the client DOM build, and the `import` condition (Node/SSR environments) points to the SSR build. In the SSR build, `createPlayerStore` automatically degrades to a no-op audio adapter with no `navigator` / `Audio` / `storage` dependencies — `renderToString` executes with **zero client-API errors** (renders an empty string; the player mounts client-side after hydration).
+
+```js
+// package.json exports (built-in)
+{
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "browser": "./dist/nyx-player.js",
+      "import": "./dist/ssr/index.js"
+    },
+    ...
+  }
+}
+```
+
+## Astro integration example
+
+### 1. Wrap the component (CSR)
+
+```astro
+---
+// src/components/NyxPlayer.astro
+import { NyxPlayer } from "nyx-player-solid";
+import "nyx-player-solid/style";
+const { urls } = Astro.props;
+---
+
+<client:only="solid">
+  <NyxPlayer urls={urls} showBtn="#show" playBtn="#play" />
+  <button id="show">Player</button>
+  <button id="play">Play/Pause</button>
+</client:only>
+```
+
+> `client:only` ensures client-only rendering; combined with the built-in `browser`/`import` dual outputs, the static `astro build` output stays safe.
+
+### 2. Custom element (zero-JS integration)
+
+```html
+<!-- src/layouts/Base.astro -->
+<script>
+  import "nyx-player-solid/custom-element";
+  import "nyx-player-solid/style";
+</script>
+
+<nyx-player config='{"urls": [...], "showBtn": "#show"}' />
+```
+
+## Manual instances (createPlayerStore)
+
+SSR-safe instantiation for non-component scenarios:
+
+```tsx
+import { createPlayerStore, PlayerProvider } from "nyx-player-solid";
+
+export const store = createPlayerStore({ sources });
+// <PlayerProvider store={store}>...</PlayerProvider>
+// call store.init() after mount (internal navigator/storage guards)
+```
+
+Persistence defaults to `sessionStorage`; pass `persist: false` (or a custom `StorageLike`) for SSR or when disabled.
+
+## Verifying SSR safety
+
+The repo includes `scripts/ssr-check.mjs`: it runs `renderToString` against the `dist/ssr` output in Node and asserts no client-API errors. After any change:
+
+```bash
+pnpm build   # includes ssr-check
+```

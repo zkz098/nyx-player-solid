@@ -1,0 +1,8 @@
+packages:
+  - docs
+
+allowBuilds:
+  esbuild: true
+
+onlyBuiltDependencies:
+  - esbuild

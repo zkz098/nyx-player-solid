@@ -1,0 +1,79 @@
+---
+title: 快速开始
+description: 安装、最小示例与页面集成方式。
+---
+
+## 安装
+
+```bash
+pnpm add nyx-player-solid
+# 或
+npm install nyx-player-solid
+```
+
+依赖仅为 `solid-js` 与 `solid-element`（custom element 入口使用）；样式为打包好的静态 CSS，随包分发。
+
+## Solid 工程用法
+
+```tsx
+import { NyxPlayer } from "nyx-player-solid";
+import "nyx-player-solid/style";
+
+const songs = [
+  {
+    name: "示例音频 1",
+    artist: "demo",
+    url: "https://example.com/song1.mp3",
+    pic: "https://example.com/cover1.jpg",
+    lrc: "[00:00.00]第一行歌词\n[00:10.00]第二行歌词",
+  },
+];
+
+export function Player() {
+  return (
+    <NyxPlayer
+      urls={[{ name: "demo", songs }]}
+      showBtn="#show" // 页面上的显示/隐藏按钮（selector）
+      playBtn="#play" // 页面上的播放/暂停按钮
+      preset="shokax"
+    />
+  );
+}
+```
+
+页面需要提供两个外部按钮元素：
+
+```html
+<button id="show">显示 / 隐藏播放器</button>
+<button id="play">播放 / 暂停</button>
+```
+
+> 外部按钮也支持传 `HTMLElement` 或返回元素的函数，详见[组件 API](/guides/component-api/)。
+
+## 无构建环境的 script 引入
+
+`<nyx-player>` 自定义元素入口无需构建即可使用：
+
+```html
+<script type="module" src="https://unpkg.com/nyx-player-solid/custom-element"></script>
+<link rel="stylesheet" href="https://unpkg.com/nyx-player-solid/style" />
+
+<nyx-player
+  config='{
+    "urls": [
+      { "name": "demo", "songs": [{ "name": "歌名", "artist": "歌手", "url": "https://example.com/a.mp3", "pic": "", "lrc": "" }] }
+    ],
+    "showBtn": "#show",
+    "playBtn": "#play"
+  }'
+></nyx-player>
+```
+
+详见 [Custom Element 指南](/guides/custom-element/)。
+
+## 下一步
+
+- [组件 API](/guides/component-api/) —— 完整 props 与 store 方法
+- [主题定制](/guides/theming/) —— 预设与 token 覆盖
+- [SSR / 集成](/guides/ssr/) —— Astro/Next 等服务端渲染用法
+- [实时演示](/guides/demo/) —— 直接体验播放器

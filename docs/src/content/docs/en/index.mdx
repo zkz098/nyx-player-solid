@@ -1,0 +1,57 @@
+---
+title: NyxPlayer Solid
+description: A clean, minimal music player component library built with SolidJS — component API, Custom Element, SSR-safe, themeable.
+template: splash
+hero:
+  title: NyxPlayer Solid
+  tagline: A clean, minimal SolidJS music player component library
+  actions:
+    - text: Quick Start
+      link: /en/guides/quick-start/
+      icon: right-arrow
+    - text: GitHub
+      link: https://github.com/earendil-works/nyx-player-solid
+      icon: external
+    - text: Live Demo
+      link: /en/guides/demo/
+---
+
+NyxPlayer Solid is a SolidJS rewrite of NyxPlayer: an embeddable music player component library for any page. Compared to the original (Vue + global singleton), the rewrite features a **unidirectional data flow, injectable adapters, and multi-instance isolation**, plus a Custom Element entry, SSR-safe rendering, and full theming support.
+
+## Features
+
+- **Two entry points**: `<NyxPlayer>` component for Solid projects and `<nyx-player>` custom element for any page
+- **Framework-agnostic core**: `PlayerCore` + `AudioAdapter` + metadata providers (direct / meting / composite)
+- **SSR safe**: dual build outputs (client DOM + SSR) — `renderToString` with zero client-API errors
+- **Theming**: tokenized CSS variables, `nyx` / `shokax` presets, automatic dark mode
+- **R4 extensions**: MediaSession, drag-to-seek, volume slider, karaoke word-level lyrics, MiniBar mode, cross-playlist playback, play history, audio visualization
+- **No event bus**: signals → effects drive the adapter; instances never interfere
+
+## Quick start
+
+```bash
+pnpm add nyx-player-solid
+```
+
+```tsx
+import { NyxPlayer } from "nyx-player-solid";
+import "nyx-player-solid/style";
+
+export function Player() {
+  return (
+    <NyxPlayer
+      urls={[
+        {
+          name: "demo",
+          songs: [
+            { name: "Demo track", artist: "demo", url: "https://example.com/song.mp3", pic: "", lrc: "" },
+          ],
+        },
+      ]}
+      showBtn="#show"
+    />
+  );
+}
+```
+
+See the [Quick Start](/en/guides/quick-start/) guide for details.

@@ -1,6 +1,7 @@
 import { defineConfig } from "oxlint";
 
 export default defineConfig({
+  ignorePatterns: ["dist/**", "coverage/**", "playwright-report/**", "docs/**", "node_modules"],
   categories: {
     correctness: "error",
     suspicious: "error",

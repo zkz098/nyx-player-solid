@@ -1,0 +1,94 @@
+---
+title: Component API
+description: Full reference for NyxPlayerProps and PlayerStore.
+---
+
+## `<NyxPlayer>` Props
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `urls` | `PlaylistSource[]` | — | Playlist sources (URL playlists / direct songs, either) |
+| `showBtn` | `ExternalButtonRef` | — | Custom "show/hide" button: `string` (selector) / `HTMLElement` / element fn |
+| `playBtn` | `ExternalButtonRef` | — | Custom "play/pause" button, same |
+| `darkModeTarget` | `DarkModeTarget` | — | Dark mode: `"auto"` (system) or CSS selector (target exists = dark) |
+| `preset` | `string` | `"nyx"` | Color preset: `nyx` / `shokax` |
+| `styles` | `Partial<ThemePreset>` | — | Custom color token overrides (deep-merged, never mutates presets) |
+| `provider` | `MetadataProvider` | composite | Metadata provider (direct + meting) |
+| `persist` | `boolean \| StorageLike` | true | Cross-page persistence or custom storage adapter |
+| `mode` | `"panel" \| "mini"` | `"panel"` | Initial shape: full panel or MiniBar |
+
+### `PlaylistSource`
+
+```ts
+interface PlaylistSource {
+  /** Display name */
+  name: string;
+  /** Playlist URL (Netease / QQ Music etc., URL-parsed) */
+  url?: string;
+  /** Direct song list (played as-is, no parsing) */
+  songs?: Song[];
+}
+```
+
+### `Song`
+
+```ts
+interface Song {
+  name: string;   // track title
+  artist: string; // artist
+  url: string;    // direct audio URL
+  pic: string;    // cover image URL
+  lrc: string;    // lyrics (LRC text or LRC URL)
+}
+```
+
+## PlayerStore — programmatic control
+
+Create an instance with `createPlayerStore` (factory + Context injection, isolated per instance), or use `usePlayer()` inside `<PlayerProvider>`:
+
+```tsx
+import { createPlayerStore, PlayerProvider, usePlayer } from "nyx-player-solid";
+
+const store = createPlayerStore({ sources });
+
+function Consumer() {
+  const player = usePlayer();
+  return (
+    <button onClick={() => player.toggle()}>
+      {player.state.playing ? "Pause" : "Play"}
+    </button>
+  );
+}
+```
+
+### Methods
+
+| Method | Description |
+| --- | --- |
+| `init()` | Fetch playlists concurrently + apply persisted state (call once after mount) |
+| `play()` / `pause()` / `toggle()` | Play / pause / toggle |
+| `next()` / `prev()` | Next / previous (prev falls back to last visited track in non-order modes) |
+| `seek(time)` | Seek to seconds |
+| `setMode(mode)` / `cycleMode()` | Set / cycle play mode (order → random → loop) |
+| `setVolume(v)` / `toggleMute()` | Volume (0-1) and mute |
+| `selectPlaylist(i)` / `playSong(pl, song)` | Switch playlist / play a specific track |
+| `back()` / `forward()` / `clearHistory()` / `getHistory()` | Play history navigation and access |
+| `getAnalyser()` | Audio analysis node (`null` when unsupported — see [Extended Features](/en/guides/extend/)) |
+
+### `state` (fine-grained subscriptions)
+
+`state` is a Solid store: reading `state.xxx` only re-runs when that field changes. Key fields: `playing`, `currentTime`, `duration`, `mode`, `playlists`, `playlistNames`, `playlistIndex`, `perSongIndex`, `perLastIndex`, `volume`, `muted`, `loading`, `error`.
+
+## Persistence
+
+`sessionStorage` saves the playback scene by default (playing state, time, mode, position, volume — **playlist contents never persist**):
+
+```tsx
+// disable
+<NyxPlayer urls={urls} persist={false} />
+
+// custom storage
+<NyxPlayer urls={urls} persist={{ getItem: ..., setItem: ... }} />
+```
+
+`StorageLike`: `{ getItem(key): string | null; setItem(key, value): void }`.

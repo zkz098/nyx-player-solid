@@ -1,0 +1,76 @@
+---
+title: Custom Element
+description: Use the <nyx-player> tag without a build step.
+---
+
+The custom element entry provides zero-build integration for any page (HTML / Hexo / static blogs / doc sites): the `<nyx-player>` tag auto-registers, and configuration is passed via the `config` attribute (JSON string) or the `.config` property.
+
+## Loading assets
+
+```html
+<script type="module" src="https://unpkg.com/nyx-player-solid/custom-element"></script>
+<link rel="stylesheet" href="https://unpkg.com/nyx-player-solid/style" />
+```
+
+Local build artifacts:
+
+```html
+<script type="module" src="./node_modules/nyx-player-solid/custom-element.js"></script>
+<link rel="stylesheet" href="./node_modules/nyx-player-solid/nyx-player.css" />
+```
+
+## Basic usage
+
+```html
+<nyx-player
+  config='{
+    "urls": [
+      {
+        "name": "demo",
+        "songs": [
+          { "name": "Track", "artist": "Artist", "url": "/audio/song.mp3", "pic": "/cover.jpg", "lrc": "[00:00.00]lyrics" }
+        ]
+      }
+    ],
+    "showBtn": "#show",
+    "playBtn": "#play",
+    "preset": "shokax",
+    "darkModeTarget": "html[data-theme='dark']"
+  }'
+></nyx-player>
+```
+
+The top-level `config` JSON supports `urls` / `showBtn` / `playBtn` / `darkModeTarget` / `preset` / `persist`.
+
+## Attributes
+
+| Attribute | Description |
+| --- | --- |
+| `config` | JSON-serialized full config (highest priority) |
+| `urls` | JSON-serialized `PlaylistSource[]` (alternative to `config`) |
+| `showBtn` / `playBtn` | External button selectors |
+| `darkModeTarget` / `preset` | Theming |
+
+Complex values (`styles`, `provider`) cannot be expressed as JSON attributes — assign via the property:
+
+```js
+const el = document.querySelector("nyx-player");
+el.config = {
+  urls: [...],
+  styles: { styles: { light: { primary: "rgb(233, 84, 107)" } } },
+};
+```
+
+## Manual registration
+
+The module auto-registers `<nyx-player>`; for custom tag names or multi-instance registration:
+
+```ts
+import { registerNyxPlayerElement } from "nyx-player-solid/custom-element";
+
+registerNyxPlayerElement();
+```
+
+## SSR / no Web Components
+
+When `customElements` is unavailable (SSR, old browsers), registration is silently skipped — no errors.

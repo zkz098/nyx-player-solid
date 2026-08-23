@@ -1,0 +1,4 @@
+dist/
+public/demo/
+public/assets/
+node_modules/.astro/

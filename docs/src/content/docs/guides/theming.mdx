@@ -1,0 +1,95 @@
+---
+title: 主题定制
+description: 预设、token 覆盖与深色模式跟随。
+---
+
+主题系统基于 **token 化 CSS 变量**：面板所有颜色均来自一组 token，预设与自定义深合并后注入 `:root`（或指定容器）。
+
+## 预设
+
+内置两套预设：
+
+| 预设 | 主色 | 悬停 |
+| --- | --- | --- |
+| `nyx`（默认） | `rgb(10, 116, 38)` | `rgb(10, 116, 38)` |
+| `shokax` | `rgb(233, 84, 107)` | `#ed6ea0` |
+
+```tsx
+<NyxPlayer urls={urls} preset="shokax" />
+```
+
+## 自定义 token 覆盖
+
+`styles` 按 `light` / `dark` 两组 token 深合并（**返回新对象，不污染预设**）：
+
+```tsx
+<NyxPlayer
+  urls={urls}
+  styles={{
+    styles: {
+      light: { primary: "rgb(80, 140, 220)", hoverBtn: "#2d6cdf" },
+      dark: { primary: "rgb(120, 180, 255)", hoverBtn: "#5ea2ff" },
+    },
+  }}
+/>
+```
+
+### 全部 token
+
+| Token | 用途 |
+| --- | --- |
+| `background` | 面板背景 |
+| `border` | 面板边框 |
+| `closeBtn` | 关闭按钮颜色 |
+| `primaryText` / `secondaryText` | 主文本 / 次级文本 |
+| `playlistLine` | 播放列表分隔线 |
+| `hoverBtn` | 悬停强调色 |
+| `shadow` | 面板阴影 |
+| `primary` / `primaryRgb` | 主色（`rgb(...)` 形式）与其 RGB 分量 |
+
+示例 token 结构：
+
+```ts
+interface ThemeTokens {
+  background: string;
+  border: string;
+  closeBtn: string;
+  primaryText: string;
+  secondaryText: string;
+  playlistLine: string;
+  hoverBtn: string;
+  shadow: string;
+  primary: string;
+  primaryRgb: string;
+}
+```
+
+## 深色模式跟随
+
+| 值 | 行为 |
+| --- | --- |
+| `"auto"` | 跟随系统 `prefers-color-scheme` |
+| CSS 选择器（如 `html[data-theme='dark']`） | 目标存在即深色；用 `MutationObserver` 监听属性变化（博客切换主题时实时跟随） |
+
+```tsx
+// 跟随系统
+<NyxPlayer urls={urls} darkModeTarget="auto" />
+
+// 跟随博客的 data-theme 属性
+<NyxPlayer urls={urls} darkModeTarget="html[data-theme='dark']" />
+```
+
+## 编程式主题
+
+```ts
+import { presets, resolveTheme, applyThemeTokens, useTheme } from "nyx-player-solid";
+
+// 解析（深合并，返回新对象）
+const theme = resolveTheme({ preset: "shokax", custom: styles });
+
+// 应用到容器
+applyThemeTokens(document.documentElement, theme.styles.light);
+
+// Solid hook：自动跟随暗色信号并注入 CSS 变量
+useTheme({ preset, custom, darkModeTarget });
+```

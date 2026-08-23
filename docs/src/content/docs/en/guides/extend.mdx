@@ -1,0 +1,64 @@
+---
+title: Extended Features
+description: MediaSession, drag-to-seek, lyrics enhancements, MiniBar, history and visualization.
+---
+
+All R4 extensions are built in and enabled by default (unless stated otherwise).
+
+## MediaSession + global media keys
+
+The player connects to the system media center: play / pause / previous / next / seek media keys and lock-screen controls work; `navigator.mediaSession.metadata` (title / artist / cover) updates with the current track.
+
+`<NyxPlayer>` mounts it by default; for programmatic use:
+
+```tsx
+import { useMediaSession } from "nyx-player-solid";
+
+// call after instantiating the store (session injectable for tests; null disables)
+useMediaSession(store);
+```
+
+## Drag-to-seek and volume slider
+
+- The progress bar supports pointer dragging: the position previews live while dragging, **seek commits on release**; `←`/`→` nudge ±5s
+- A volume slider (`input[type=range]`) replaces the plain mute button; muted shows 0 and unmuting restores the previous value
+
+## Lyrics enhancements
+
+- **Karaoke word-level highlighting** for LLRC timestamps `<mm:ss.xx>word`; plain LRC degrades to whole-line highlight automatically
+- **Click-to-seek**: clicking any lyric line jumps to its start time
+- Parsers live in the core: `parseWordLyric` / `activeWordIndex` (see [Reference](/en/reference/core-api/))
+
+## MiniBar mode
+
+```tsx
+<NyxPlayer urls={urls} mode="mini" />
+```
+
+A bar with cover + title + play/pause + expand button; expanding returns to the full panel.
+
+## Cross-playlist playback + history
+
+- When a playlist ends, playback moves to the **next non-empty playlist** (circular; `mode="loop"` stays single-track, never crosses)
+- Play history: `back()` / `forward()` / `clearHistory()` / `getHistory()` (browser-style navigation; new navigation drops the forward branch)
+
+```tsx
+<button onClick={() => player.back()}>Back</button>
+<button onClick={() => player.forward()}>Forward</button>
+```
+
+## Audio visualization
+
+`AudioAdapter.getContextAnalysis()` exposes the WebAudio `AnalyserNode` (lazy-created, connected back to destination). Frame rate adapts to the **CPU performance tier**:
+
+- WICG CPU Performance API (`navigator.cpuPerformance`, 1-4) **tier ≥ 4 → 60fps**
+- Otherwise / API not shipped (common in production today) → 30fps low frame rate
+
+```tsx
+import { cpuPerformanceLevel, visualizerFrameIntervalMs } from "nyx-player-solid";
+
+const level = cpuPerformanceLevel(); // number | null
+const interval = visualizerFrameIntervalMs(level); // 16 | 33
+```
+
+Works automatically wherever `AudioContext` exists; the rAF loop stops when the panel closes/collapses.

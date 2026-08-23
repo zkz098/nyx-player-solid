@@ -1,0 +1,63 @@
+---
+title: NyxPlayer Solid
+description: 简洁美观的音乐播放器组件库（SolidJS）——组件 API、Custom Element、SSR 安全、可主题化。
+template: splash
+hero:
+  title: NyxPlayer Solid
+  tagline: 简洁美观的 SolidJS 音乐播放器组件库
+  actions:
+    - text: 快速开始
+      link: /guides/quick-start/
+      icon: right-arrow
+    - text: GitHub
+      link: https://github.com/earendil-works/nyx-player-solid
+      icon: external
+    - text: 实时演示
+      link: /guides/demo/
+---
+
+NyxPlayer Solid 是 NyxPlayer 的 SolidJS 重构版：一个可嵌入任意页面的音乐播放器组件库。相比原版（Vue + 全局单例），重构版拥有**单向数据流、可注入适配器、多实例隔离**的核心架构，并支持自定义元素、SSR 安全渲染与完整主题定制。
+
+## 特性
+
+- **组件 API + Custom Element 双入口**：Solid 工程可直接 `<NyxPlayer>`，任意页面可用 `<nyx-player>` 标签
+- **框架无关的 core 层**：`PlayerCore` + `AudioAdapter` + 元数据 Provider（direct / meting / composite）
+- **SSR 安全**：双构建产物（client DOM + SSR），`renderToString` 零客户端 API 报错
+- **主题系统**：token 化 CSS 变量、`nyx` / `shokax` 预设、深色模式自动跟随
+- **R4 扩展**：MediaSession、拖拽 seek、音量滑杆、卡拉 OK 逐字歌词、MiniBar 双形态、跨歌单连续播放、播放历史、音频可视化
+- **零事件总线**：信号 → effect 驱动适配器，多实例互不干扰
+
+## 快速上手
+
+```bash
+pnpm add nyx-player-solid
+```
+
+```tsx
+import { NyxPlayer } from "nyx-player-solid";
+import "nyx-player-solid/style";
+
+export function Player() {
+  return (
+    <NyxPlayer
+      urls={[
+        {
+          name: "demo",
+          songs: [
+            {
+              name: "示例音频",
+              artist: "demo",
+              url: "https://example.com/song.mp3",
+              pic: "",
+              lrc: "",
+            },
+          ],
+        },
+      ]}
+      showBtn="#show"
+    />
+  );
+}
+```
+
+详见[快速开始](/guides/quick-start/)。

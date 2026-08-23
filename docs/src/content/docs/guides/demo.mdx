@@ -1,0 +1,33 @@
+---
+title: 实时演示
+description: 直接体验播放器（本页 iframe 加载真实构建产物）。
+---
+
+下方 iframe 加载**真实发行产物**（`dist` 构建后的 custom element 入口 + 静态 CSS），可直接交互体验。
+
+<iframe
+  src="/demo/index.html"
+  title="NyxPlayer Solid 实时演示"
+  style="width: 100%; height: 420px; border: 1px solid var(--theme-600, #888); border-radius: 8px"
+></iframe>
+
+> 演示数据使用公共示例音频（SoundHelix）；无网络环境下音频不可用，但播放器界面与交互完整可用。
+
+## 本地运行文档站
+
+```bash
+# 先构建播放器产物（demo 页需要 dist）
+pnpm build
+# 再启动文档站
+pnpm docs:dev        # 开发模式 http://localhost:4321
+```
+
+## 自定义 demo 数据
+
+demo 页面源码在仓库 `docs/static/demo/`，构建脚本 `scripts/build-demo.mjs` 会：
+
+1. 校验 `dist/` 产物存在（缺失则提示先 `pnpm build`）
+2. vite 构建 demo 自包含 bundle（solid 内联的 `main.js`）→ 文档站静态目录，样式用 `dist/nyx-player.css`
+3. 生成 `index.html`（引用拷贝后的产物 + 你的配置）
+
+修改 `docs/static/demo/sources.js`（歌曲列表）后重新 `pnpm docs:build` 即生效。

@@ -1,0 +1,64 @@
+---
+title: 扩展功能
+description: MediaSession、拖拽 seek、歌词增强、MiniBar、历史与可视化。
+---
+
+R4 扩展全部内置，无需额外配置（除特殊说明外默认启用）。
+
+## MediaSession + 全局媒体键
+
+播放器接入系统媒体中心：播放/暂停/上一首/下一首/跳转媒体键与锁屏控制可用；`navigator.mediaSession.metadata`（标题 / 歌手 / 封面）随当前歌曲更新。
+
+`<NyxPlayer>` 默认挂载；编程式场景用 `useMediaSession`：
+
+```tsx
+import { useMediaSession } from "nyx-player-solid";
+
+// 在 store 实例化后调用（session 可注入以便测试；null 强制禁用）
+useMediaSession(store);
+```
+
+## 拖拽 Seek 与音量滑杆
+
+- 进度条支持指针拖拽：拖拽中实时预览位置，**松手才 seek**；键盘 `←`/`→` 微调 ±5s
+- 音量滑杆（`input[type=range]`）替代纯静音按钮；静音时滑杆显示 0，取消静音恢复原值
+
+## 歌词增强
+
+- **卡拉 OK 逐字**：支持 LLRC 词级时间戳 `<mm:ss.xx>词`，当前行逐词点亮；无词级标签的普通 LRC 自动退化为整词高亮
+- **行点击 seek**：点击任意歌词行跳到该行开始时间
+- 解析器在 core 层：`parseWordLyric` / `activeWordIndex`（见[参考](/reference/core-api/)）
+
+## MiniBar 双形态
+
+```tsx
+<NyxPlayer urls={urls} mode="mini" />
+```
+
+浮条形态：封面 + 标题 + 播放/暂停 + 展开按钮；点击展开回到完整面板。
+
+## 跨歌单连续播放 + 播放历史
+
+- 歌单播完自动跳到**下一非空歌单**（环形回绕；`mode="loop"` 时单曲循环优先，不跨歌单）
+- 播放历史：`back()` / `forward()` / `clearHistory()` / `getHistory()`（浏览器式后退/前进；主动切歌丢弃前进分支）
+
+```tsx
+<button onClick={() => player.back()}>后退</button>
+<button onClick={() => player.forward()}>前进</button>
+```
+
+## 音频可视化
+
+`AudioAdapter.getContextAnalysis()` 提供 WebAudio `AnalyserNode`（懒创建、连回 destination）。可视化按 **CPU 性能层级自适应帧率**：
+
+- WICG CPU Performance API（`navigator.cpuPerformance`，1-4）**层级 ≥4 → 60fps**
+- 否则 / API 未发布（当前生产环境常见）→ 30fps 低帧率
+
+```tsx
+import { cpuPerformanceLevel, visualizerFrameIntervalMs } from "nyx-player-solid";
+
+const level = cpuPerformanceLevel(); // number | null
+const interval = visualizerFrameIntervalMs(level); // 16 | 33
+```
+
+只要环境支持 `AudioContext` 即自动工作；面板关闭/折叠时 rAF 自动停止。

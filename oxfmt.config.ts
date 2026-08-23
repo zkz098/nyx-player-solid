@@ -6,6 +6,7 @@ export default defineConfig({
     "coverage/**",
     "playwright-report/**",
     ".playwright-mcp/**",
+    "docs/**",
     "node_modules",
   ],
 });

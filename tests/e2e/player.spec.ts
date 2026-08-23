@@ -64,7 +64,9 @@ test("歌词渲染：内联 LRC 显示且高亮随当前时间推进", async ({ 
   await expect(lyricLines.nth(0)).toHaveClass(/current/);
 });
 
-test("音频可视化：canvas 渲染且无页面错误（headless 分析受限，验收到元素存在）", async ({ page }) => {
+test("音频可视化：canvas 渲染且无页面错误（headless 分析受限，验收到元素存在）", async ({
+  page,
+}) => {
   const errors: string[] = [];
   page.on("pageerror", (err) => errors.push(err.message));
   await openPlayer(page);
