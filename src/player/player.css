@@ -21,8 +21,9 @@
   background: none;
   color: inherit;
   cursor: pointer;
-  padding: 0.25rem 0;
-  font-size: 1.25rem;
+  padding: 0.5rem 0;
+  font-size: 1.5rem;
+  line-height: 1;
 }
 
 .nyx-player .controller button:hover {
@@ -225,7 +226,7 @@
 .nyx-player .nyx-song-list .progress-text {
   line-height: 2rem;
   pointer-events: none;
-  z-index: 1;
+  z-index: 2;
 }
 
 .nyx-player .nyx-loading {

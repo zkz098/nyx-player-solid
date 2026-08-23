@@ -29,7 +29,7 @@ export function PlaylistTabs(): JSX.Element {
     <div class="playlist">
       <div class="tabs relative block">
         <div class="nav h-2.6875rem border-b border-[var(--player-border)]">
-          <ul class="flex overflow-x-auto whitespace-nowrap p-0">
+          <ul class="flex overflow-x-auto overflow-y-hidden whitespace-nowrap p-0">
             <For each={state.playlistNames}>
               {(name, index) => (
                 <li
@@ -59,11 +59,11 @@ export function PlaylistTabs(): JSX.Element {
                       <div
                         class="progress absolute left-0 top-0 h-full rounded-0.8125em bg-[var(--primary-color-a)] transition-width duration-250 ease-linear"
                         style={{ width: `${percent()}%` }}
-                      >
-                        <span class="progress-text absolute right-0 top-0 pr-1 pl-1 text-[var(--secondary-text)]">
-                          {formatTime(state.currentTime)} / {formatTime(state.duration)}
-                        </span>
-                      </div>
+                      />
+                      {/* 时间固定在行右端（progress 宽度内会随进度漂移——错位修复） */}
+                      <span class="progress-text absolute right-1.25 top-0 z-2 pr-0.625rem pl-1 text-[var(--secondary-text)]">
+                        {formatTime(state.currentTime)} / {formatTime(state.duration)}
+                      </span>
                     </Show>
                     <span class="relative z-1 w-full overflow-hidden text-ellipsis">
                       <span class="name float-left">{song.name}</span>

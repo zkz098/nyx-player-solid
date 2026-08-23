@@ -29,14 +29,14 @@ export function Controller(): JSX.Element {
   return (
     <div class="controller flex cursor-pointer items-center justify-around text-align-center text-sm">
       <button
-        class="mode-btn w-1/6 text-xl"
+        class="mode-btn w-1/6 text-2xl"
         type="button"
         aria-label={`播放模式：${store.state.mode}`}
         onClick={() => store.cycleMode()}
       >
         <span class={modeIcon()} />
       </button>
-      <button class="w-1/6 text-xl" type="button" aria-label="上一首" onClick={() => store.prev()}>
+      <button class="w-1/6 text-2xl" type="button" aria-label="上一首" onClick={() => store.prev()}>
         <span class={`i-ri-skip-back-line`} />
       </button>
       <button
@@ -47,12 +47,12 @@ export function Controller(): JSX.Element {
       >
         <span class={store.state.playing ? "i-ri:pause-circle-fill" : "i-ri:play-circle-fill"} />
       </button>
-      <button class="w-1/6 text-xl" type="button" aria-label="下一首" onClick={() => store.next()}>
+      <button class="w-1/6 text-2xl" type="button" aria-label="下一首" onClick={() => store.next()}>
         <span class={`i-ri-skip-forward-line`} />
       </button>
       <div class="flex w-2/6 items-center justify-around gap-1">
         <button
-          class="min-w-8 text-xl"
+          class="min-w-9 text-2xl"
           type="button"
           aria-label={store.state.muted ? "取消静音" : "静音"}
           onClick={() => store.toggleMute()}

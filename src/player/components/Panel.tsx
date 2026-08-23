@@ -37,12 +37,12 @@ export function Panel(props: PanelProps): JSX.Element {
         <Controller />
         <PlaylistTabs />
         <button
-          class="absolute right-4 top-3 cursor-pointer text-3.25 hover:color-[var(--hover-btn)]"
+          class="absolute right-3 top-2.5 flex h-8 w-8 cursor-pointer items-center justify-center p-1.5 hover:color-[var(--hover-btn)]"
           type="button"
           aria-label="关闭播放器"
           onClick={toggleOnClose}
         >
-          <span class="i-ri-close-line text-5" />
+          <span class="i-ri-close-line text-6" />
         </button>
       </Show>
     </div>
