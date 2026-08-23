@@ -9,6 +9,8 @@ export { createPlayerStore, PlayerProvider, usePlayer } from "./player/store";
 export type { PlayerStore, PlayerStoreOptions, StorageLike } from "./player/store";
 export { useExternalButton } from "./player/external-button";
 export type { ExternalButtonRef } from "./player/external-button";
+export { useMediaSession } from "./player/media-session";
+export type { MediaSessionLike } from "./player/media-session";
 export { applyThemeTokens, presets, resolveTheme, useTheme } from "./player/theme";
 export type { DarkModeTarget, ThemePreset, ThemeTokens } from "./player/theme";
 export * from "./core";

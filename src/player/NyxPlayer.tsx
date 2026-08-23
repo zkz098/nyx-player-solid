@@ -5,6 +5,7 @@ import type { MetadataProvider, PlaylistSource } from "../core";
 import { resolveExternalButton } from "./external-button";
 import { useExternalButton } from "./external-button";
 import type { ExternalButtonRef } from "./external-button";
+import { useMediaSession } from "./media-session";
 import { Panel } from "./components/Panel";
 import { createPlayerStore, PlayerProvider } from "./store";
 import type { PlayerStore, StorageLike } from "./store";
@@ -54,6 +55,9 @@ export function NyxPlayer(props: NyxPlayerProps): JSX.Element {
     custom: props.styles,
     darkModeTarget: props.darkModeTarget,
   });
+
+  // 系统媒体中心集成（SSR 无 navigator 时内部自动 no-op）
+  useMediaSession(store);
 
   useExternalButton({
     ref: props.showBtn,
