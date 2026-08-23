@@ -1,46 +1,58 @@
 import { createMemo, createResource, For, Show } from "solid-js";
 import type { JSX } from "solid-js";
-import type { LyricLine } from "../../core";
-import { fetchLyricText, findActiveLyricIndex, parseLyric } from "../../core";
+import type { WordLyricLine } from "../../core";
+import { activeWordIndex, fetchLyricText, findActiveLyricIndex, parseWordLyric } from "../../core";
 import { usePlayer } from "../store";
 import { useCurrentSong } from "./useCurrentSong";
+import { formatTime } from "./format";
 
-const WINDOW = 2; // 当前行前后各显示 2 行（共 5 行窗口）
+const WINDOW = 2; // 当前行前后各显示 2 行（共 5 行窗口；active 恒居中）
 
 /**
- * 歌词展示。修复原版 bug：lrcIdx 从未递增导致高亮恒在第一行。
- * 新版由 currentTime 线性定位活动行（activeIndex 派生，无独立递增状态）。
+ * 歌词展示（R4 8.3 增强）：
+ * - 行点击 seek：点击任意歌词行跳转到该行开始时间
+ * - 卡拉 OK 逐字：LLRC 词级时间戳 → 当前行内逐词点亮（parseWordLyric 兼容纯 LRC）
+ * 窗口化渲染：active 行恒居中（自带"滚动高亮"），修复原版 lrcIdx 恒定 bug
+ * （findActiveLyricIndex 线性定位，无独立递增状态）。
  */
 export function Lyrics(): JSX.Element {
-  const { state } = usePlayer();
+  const player = usePlayer();
   const song = useCurrentSong();
 
   const lrc = createMemo(() => song()?.lrc ?? "");
   const [data] = createResource<string, string>(lrc, (url) => fetchLyricText(url));
-  const lines = createMemo<LyricLine[]>(() => {
+  const lines = createMemo<WordLyricLine[]>(() => {
     const text = data();
-    return text ? parseLyric(text) : [];
+    return text ? parseWordLyric(text) : [];
   });
 
-  const activeIndex = createMemo<number>(() => findActiveLyricIndex(lines(), state.currentTime));
+  const activeIndex = createMemo<number>(() =>
+    findActiveLyricIndex(lines(), player.state.currentTime),
+  );
+  const activeWord = createMemo<number>(() => {
+    const line = lines()[activeIndex()];
+    return line ? activeWordIndex(line.words, player.state.currentTime) : -1;
+  });
 
-  const windowLines = createMemo<Array<{ key: number; text: string; current: boolean }>>(() => {
-    const list = lines();
-    const active = activeIndex();
-    if (active < 0 || list.length === 0) {
-      return [];
-    }
-    const start = Math.max(0, active - WINDOW);
-    const end = Math.min(list.length, active + WINDOW + 1);
-    const out: Array<{ key: number; text: string; current: boolean }> = [];
-    for (let i = start; i < end; i++) {
-      const line = list[i];
-      if (line) {
-        out.push({ key: i, text: line.text, current: i === active });
+  const windowLines = createMemo<Array<{ key: number; line: WordLyricLine; current: boolean }>>(
+    () => {
+      const list = lines();
+      const active = activeIndex();
+      if (active < 0 || list.length === 0) {
+        return [];
       }
-    }
-    return out;
-  });
+      const start = Math.max(0, active - WINDOW);
+      const end = Math.min(list.length, active + WINDOW + 1);
+      const out: Array<{ key: number; line: WordLyricLine; current: boolean }> = [];
+      for (let i = start; i < end; i++) {
+        const line = list[i];
+        if (line) {
+          out.push({ key: i, line, current: i === active });
+        }
+      }
+      return out;
+    },
+  );
 
   return (
     <div class="lrc relative mt-1.25 max-h-16 overflow-hidden text-center text-3">
@@ -50,8 +62,22 @@ export function Lyrics(): JSX.Element {
       <ul class="p-0">
         <For each={windowLines()}>
           {(item) => (
-            <li class="list-none">
-              <p classList={{ current: item.current }}>{item.text || "\u00A0"}</p>
+            <li class="list-none" onClick={() => player.seek(item.line.start)}>
+              <p
+                classList={{ current: item.current }}
+                title={`跳转到 ${formatTime(item.line.start)}`}
+              >
+                <For each={item.line.words}>
+                  {(word, wordIndex) => (
+                    <span
+                      class="word"
+                      classList={{ active: item.current && wordIndex() <= activeWord() }}
+                    >
+                      {word.text}{" "}
+                    </span>
+                  )}
+                </For>
+              </p>
             </li>
           )}
         </For>

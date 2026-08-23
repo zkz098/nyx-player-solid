@@ -88,3 +88,13 @@ test("音量滑杆：拖动设定音量，静音切换后恢复原值", async ({
   await page.locator('.nyx-player button[aria-label="取消静音"]').click();
   await expect(volume).toHaveValue("0.5");
 });
+
+test("歌词行点击 seek：点击第二行跳转到 0:10", async ({ page }) => {
+  await openPlayer(page);
+
+  // demo 内联 3 行歌词（00:00 / 00:10 / 00:20）
+  const rows = page.locator(".nyx-player .lrc ul li");
+  await expect(rows).toHaveCount(3);
+  await rows.nth(1).click();
+  await expect(page.locator(".nyx-player .nyx-time")).toContainText("0:10 /");
+});

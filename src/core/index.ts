@@ -8,9 +8,18 @@ export type {
   PlayMode,
   PlaylistSource,
   Song,
+  WordLyricLine,
+  WordLyricWord,
 } from "./types";
 
-export { BoundedMap, findActiveLyricIndex, parseLyric, parseLyricLine } from "./lrc";
+export {
+  BoundedMap,
+  activeWordIndex,
+  findActiveLyricIndex,
+  parseLyric,
+  parseLyricLine,
+  parseWordLyric,
+} from "./lrc";
 export { fetchLyricText } from "./lyrics-fetch";
 export { ConcurrencyPool, runWithPool } from "./pool";
 export { hasPlaylistURL, parsePlaylistUrl } from "./url-parser";

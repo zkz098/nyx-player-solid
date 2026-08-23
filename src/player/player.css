@@ -164,6 +164,11 @@
   min-height: 1rem;
 }
 
+/* 卡拉 OK 逐字（R4 8.3）：当前行内已唱到的词点亮 */
+.nyx-player .lrc p.current .word.active {
+  color: var(--primary-color);
+}
+
 /* ---- 播放列表 ---- */
 .nyx-player .playlist {
   border-top: 0.125rem solid var(--playlist-line);

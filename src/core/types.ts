@@ -47,6 +47,22 @@ export interface LyricLine {
   end: number;
 }
 
+/** 卡拉 OK 词级单元（LLRC `<mm:ss.xx>词` 结构） */
+export interface WordLyricWord {
+  /** 词文本 */
+  text: string;
+  /** 词开始时间（秒） */
+  start: number;
+  /** 词结束时间（秒，下一词开始前；行末词为行 end） */
+  end: number;
+}
+
+/** 带词级时间戳的歌词行（extends LyricLine：行级 start/end 语义与 findActiveLyricIndex 兼容） */
+export interface WordLyricLine extends LyricLine {
+  /** 词序列；无词级标签的普通行退化为 [整行] 单词 */
+  words: WordLyricWord[];
+}
+
 /** 元数据 Provider：把歌单来源解析为可播放歌曲列表 */
 export interface MetadataProvider {
   /** 唯一的 provider 标识 */
