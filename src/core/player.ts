@@ -264,13 +264,20 @@ export class PlayerCore {
     this.setState({ muted });
   }
 
-  /** 切换歌单（保持该歌单记忆的歌曲索引） */
+  /** 切换歌单（保持该歌单记忆的歌曲索引）；若此前为播放态则续播新歌单当前曲 */
   selectPlaylist(index: number): void {
     if (index < 0 || index >= this.state.playlists.length) {
       return;
     }
-    this.setState({ playlistIndex: index });
+    if (index === this.state.playlistIndex) {
+      return;
+    }
+    const wasPlaying = this.state.playing;
+    this.setState({ playlistIndex: index, currentTime: 0, duration: 0 });
     this.syncSourceToAdapter();
+    if (wasPlaying) {
+      void this.playAudio().catch(() => undefined);
+    }
   }
 
   /** 点击歌单内某首歌：切歌且保持当前播放状态（等价原版 playSong） */

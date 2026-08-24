@@ -25,6 +25,8 @@ export { ConcurrencyPool, runWithPool } from "./pool";
 export { hasPlaylistURL, parsePlaylistUrl } from "./url-parser";
 export { createMetingProvider } from "./providers/meting";
 export type { MetingOptions } from "./providers/meting";
+export { createModernMetingProvider } from "./providers/modern-meting";
+export type { ModernMetingOptions } from "./providers/modern-meting";
 export { directProvider } from "./providers/direct";
 export { createCompositeProvider } from "./providers/composite";
 export { createHTMLAudioAdapter } from "./audio-adapter";

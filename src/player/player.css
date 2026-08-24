@@ -14,27 +14,19 @@
   transform: translateX(50%);
 }
 
-/* ---- 歌词行滚动过渡（原版 TransitionGroup name=list） ---- */
+/* ---- 歌词行滚动过渡（原版 TransitionGroup name=list，修复为滚动而非整体淡出） ---- */
 .nyx-player .lrc .list-enter-active,
 .nyx-player .lrc .list-exit-active {
-  transition: all 0.6s ease;
+  transition: opacity 0.45s ease;
 }
 
 .nyx-player .lrc .list-move {
-  transition: all 0.3s ease;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .nyx-player .lrc .list-enter,
 .nyx-player .lrc .list-exit-to {
   opacity: 0;
-  transform: translateX(30px);
-}
-
-.nyx-player .lrc .list-exit-active {
-  position: absolute;
-  display: flex;
-  justify-content: center;
-  width: 100%;
 }
 
 .nyx-player.panel {
@@ -256,13 +248,23 @@
   transition: all 0.5s ease-out;
   opacity: 0.3;
   overflow: hidden;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .nyx-player .lrc p.current {
   opacity: 1;
-  overflow: visible;
+  overflow: hidden;
   height: auto;
   min-height: 1rem;
+  max-height: 3rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* 卡拉 OK 逐字（R4 8.3）：当前行内已唱到的词点亮 */

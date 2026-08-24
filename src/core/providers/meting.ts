@@ -29,6 +29,21 @@ function str(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
+/** 升级网易云封面清晰度：90y90 → 500y500（满足 6rem 圆形在 DPR2 下的 192px，且仅 57KB）
+ *  - 直链已是 CDN（p*.music.126.net）时直接替换 ?param
+ *  - 仍是 meting API 跳转链接（api.injahow.cn/meting/?type=pic）时保持原样，由 AudioCover 在加载后跟随 302 再二次升级（见 AudioCover）
+ *  tencent 同理：T002R300x300 → T002R500x500 */
+function upgradePic(url: string): string {
+  if (!url) return url;
+  if (url.includes("music.126.net")) {
+    return url.replace(/\?param=\d+y\d+/, "?param=500y500");
+  }
+  if (url.includes("y.gtimg.cn")) {
+    return url.replace(/T002R\d+x\d+M000/, "T002R500x500M000");
+  }
+  return url;
+}
+
 /** 把 meting 响应扁平字段映射为 Song；不做类型断言，缺字段给 "" 兜底 */
 function toSong(raw: unknown): Song {
   const item = isRecord(raw) ? raw : {};
@@ -36,7 +51,7 @@ function toSong(raw: unknown): Song {
     name: str(item.name),
     artist: str(item.artist),
     url: str(item.url),
-    pic: str(item.pic),
+    pic: upgradePic(str(item.pic)),
     lrc: str(item.lrc),
   };
 }

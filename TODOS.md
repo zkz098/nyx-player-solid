@@ -38,6 +38,15 @@
 - bilibili provider —— 依赖 B 站接口稳定性，需标注实验性
 - 播放历史 UI 展示入口（core API 已就绪，8.5 验收只到单测）
 
+## 🔜 自托管路线（网易云高清封面/音频质量可控）
+> 2026-08-23 最小改动已落地：`meting.ts:upgradePic` 对 `music.126.net` 直链 `?param=90y90→500y500`、`y.gtimg.cn` 的 `T002R300→500` 做前端替换；`AudioCover` 对 `api.injahow.cn/meting/?type=pic` 跳转链接跟随 302 后二次升级。`direct` 自传 `pic` 不受影响。
+>
+> **自托管可彻底摆脱公共 API 的 90 限制与限流**，按需启用：
+> - **部署**：`docker run -d -p 3000:80 injahow/meting-api` 或 `metowolf/Meting` 自建，`CORS` 默认 `*`，`pic($id,500)` 直接返回 `500y500`，无需前端二次请求。
+> - **前端接入**：`createMetingProvider({ baseURL: "https://your-host/meting/" })` 或 `NyxPlayer` 的 `provider` 注入（`MetingOptions.baseURL` 已支持注入，`PlayerCore` 透传）。
+> - **直连不走 meting（备选）**：`GET https://music.163.com/api/song/detail/?ids=[id]` 取 `songs[0].album.picUrl` 后自拼 `?param=500y500`，同时可取更高 `br` 的 `url`（`320k`），完全可控但需自行处理 `weapi` 加密与 `Cookie`。
+> - **验收**：`preview` 切网易云歌单后封面 `currentSrc` 应含 `500y500`，`Network` 中 `p*.music.126.net` 单次 50-60KB（原 90y90 仅 3-4KB），`AudioCover` 6rem 在 DPR2 下边缘锐利无压缩块。
+
 ## 📌 实施注意（继承教训）
 1. oxlint 类型感知严格：新代码避免 `as` 断言，用类型守卫函数
 2. Solid 1.9: `createResource` 返回元组；createStore 从 `solid-js/store` 导入；**Transition/TransitionGroup 在 `solid-transition-group` 包（非 solid-js/web）**

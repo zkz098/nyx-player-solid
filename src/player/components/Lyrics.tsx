@@ -35,53 +35,70 @@ export function Lyrics(): JSX.Element {
     return line ? activeWordIndex(line.words, player.state.currentTime) : -1;
   });
 
-  const windowLines = createMemo<Array<{ key: number; line: WordLyricLine; current: boolean }>>(
+  // 稳定引用缓存：同一歌词行（按全局索引 i）在窗口滑动时复用同一对象，
+  // 使 <For> + <TransitionGroup> 能通过引用同一性识别“移动”而非“全量重建”，
+  // 避免每次换句整块 enter/exit 导致的整体淡入淡出；仅首尾行进/出，中间行走 list-move 滚动。
+  // 注意：current 不存入缓存对象（就地突变不会触发 Solid 细粒度更新），
+  // 而是在渲染时按 activeIndex() 实时计算，保证高亮随 currentTime 正确切换。
+  const windowCache = new Map<number, { key: number; line: WordLyricLine }>();
+  const windowLines = createMemo<Array<{ key: number; line: WordLyricLine }>>(
     () => {
       const list = lines();
       const active = activeIndex();
       if (active < 0 || list.length === 0) {
+        windowCache.clear();
         return [];
       }
       const start = Math.max(0, active - WINDOW);
       const end = Math.min(list.length, active + WINDOW + 1);
-      const out: Array<{ key: number; line: WordLyricLine; current: boolean }> = [];
+      const out: Array<{ key: number; line: WordLyricLine }> = [];
       for (let i = start; i < end; i++) {
         const line = list[i];
-        if (line) {
-          out.push({ key: i, line, current: i === active });
+        if (!line) continue;
+        let entry = windowCache.get(i);
+        if (!entry || entry.line !== line) {
+          entry = { key: i, line };
+          windowCache.set(i, entry);
         }
+        out.push(entry);
+      }
+      for (const k of Array.from(windowCache.keys())) {
+        if (k < start || k >= end) windowCache.delete(k);
       }
       return out;
     },
   );
 
   return (
-    <div class="lrc relative mt-1.25 max-h-16 overflow-hidden text-center text-3">
+    <div class="lrc relative mt-1.25 h-24 overflow-hidden text-center text-3">
       <Show when={data.loading}>
         <div class="flex justify-center text-3">加载歌词…</div>
       </Show>
       <ul class="p-0">
         <TransitionGroup name="list">
           <For each={windowLines()}>
-            {(item) => (
-              <li class="list-none" onClick={() => player.seek(item.line.start)}>
-                <p
-                  classList={{ current: item.current }}
-                  title={`跳转到 ${formatTime(item.line.start)}`}
-                >
-                  <For each={item.line.words}>
-                    {(word, wordIndex) => (
-                      <span
-                        class="word"
-                        classList={{ active: item.current && wordIndex() <= activeWord() }}
-                      >
-                        {word.text}{" "}
-                      </span>
-                    )}
-                  </For>
-                </p>
-              </li>
-            )}
+            {(item) => {
+              const isCurrent = () => item.key === activeIndex();
+              return (
+                <li class="list-none" onClick={() => player.seek(item.line.start)}>
+                  <p
+                    classList={{ current: isCurrent() }}
+                    title={`跳转到 ${formatTime(item.line.start)}`}
+                  >
+                    <For each={item.line.words}>
+                      {(word, wordIndex) => (
+                        <span
+                          class="word"
+                          classList={{ active: isCurrent() && wordIndex() <= activeWord() }}
+                        >
+                          {word.text}{" "}
+                        </span>
+                      )}
+                    </For>
+                  </p>
+                </li>
+              );
+            }}
           </For>
         </TransitionGroup>
       </ul>

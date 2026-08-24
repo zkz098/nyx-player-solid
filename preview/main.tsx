@@ -16,11 +16,12 @@ const urls = [
         lrc: "[00:00.00]第一行歌词\n[00:10.00]第二行歌词\n[00:20.00]第三行歌词",
       },
       {
-        name: "示例音频 2",
+        name: "示例音频 2（同源）",
         artist: "SoundHelix",
-        url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+        // 同源本地复用，确保 demo 内所有直链均为同源，避免混播导致的 MediaElementSource 单次创建限制引发的“播一段时间后无声、切歌不恢复”
+        url: "/t-rex-roar.mp3",
         pic: "https://picsum.photos/seed/nyx-2/300/300",
-        lrc: "[00:05.00]<00:05.00>卡拉 <00:05.50>OK <00:06.00>逐字歌词",
+        lrc: "[00:05.00]<00:05.00>卡拉 <00:05.50>OK <00:06.00>逐字歌词（同源复用演示）",
       },
     ],
   },

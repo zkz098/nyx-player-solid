@@ -17,10 +17,12 @@ export default defineConfig({
   },
   overrides: [
     {
-      // 重试循环的顺序 await 是合法语义（指数退避），豁免 perf 级提醒
-      files: ["src/core/providers/meting.ts"],
+      // 重试循环的顺序 await 是合法语义（指数退避），豁免 perf 级提醒；现代接口模板字符串为受控 string
+      files: ["src/core/providers/meting.ts", "src/core/providers/modern-meting.ts"],
       rules: {
         "no-await-in-loop": "off",
+        "restrict-template-expressions": "off",
+        "no-unnecessary-type-conversion": "off",
       },
     },
     {

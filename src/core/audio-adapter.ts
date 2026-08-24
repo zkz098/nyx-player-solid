@@ -57,8 +57,53 @@ export function createHTMLAudioAdapter(element?: HTMLAudioElement): AudioAdapter
     // SSR / 无 Web Audio 环境：no-op 适配器保证组件可渲染，播放动作只在 client 生效
     return createNoopAdapter();
   }
-  const audio = element ?? new Audio();
+  let audio = element ?? new Audio();
   const handlers = new Map<AudioAdapterEvent, Set<() => void>>();
+  let audioListenersBound = false;
+  const bindAudioEvents = (target: HTMLAudioElement) => {
+    if (audioListenersBound) return;
+    audioListenersBound = true;
+    for (const event of [
+      "timeupdate",
+      "ended",
+      "error",
+      "loadedmetadata",
+      "play",
+      "pause",
+    ] as const) {
+      target.addEventListener(event, () => {
+        handlers.get(event)?.forEach((handler) => handler());
+      });
+    }
+  };
+  const recreateAudioElement = (newSrc?: string): HTMLAudioElement => {
+    const old = audio;
+    const wasPaused = old.paused;
+    const curTime = old.currentTime;
+    const vol = old.volume;
+    const muted = old.muted;
+    const playbackRate = old.playbackRate;
+    old.pause();
+    old.removeAttribute("src");
+    try { old.load(); } catch {}
+    audioListenersBound = false;
+    const next = new Audio();
+    next.volume = vol;
+    next.muted = muted;
+    next.playbackRate = playbackRate;
+    next.preload = "metadata";
+    // 保留 crossOrigin 逻辑由 setSrc 统一处理，此处不设置
+    bindAudioEvents(next);
+    audio = next;
+    if (newSrc !== undefined) {
+      // 调用方会在外层设置 src，这里仅为重建后立即设置提供便利
+      audio.src = newSrc;
+    } else if (!wasPaused) {
+      // 若重建时原音频在播（极少见），尝试保持时间进度（由调用方决定是否 play）
+      try { audio.currentTime = curTime; } catch {}
+    }
+    return next;
+  };
 
   // ---- R4 8.6 分析链（懒创建，CORS 安全接管） ----
   // 关键：MediaElementSourceNode 会接管 audio 输出——对无 CORS 头的跨域源，
@@ -75,10 +120,25 @@ export function createHTMLAudioAdapter(element?: HTMLAudioElement): AudioAdapter
     analyser: null as AnalyserNode | null,
     context: null as AudioContext | null,
   };
+  // MediaElementSource 每个 <audio> 只能创建一次（即使 AudioContext 已 close 仍不可重建），
+  // 因此同源↔跨域无 CORS 混播时必须重建 <audio> 才能在后续同源曲上重建分析链，否则“播一段时间后无声、切歌不恢复”
+  let hasMediaSource = false;
 
   const attachAnalysis = (): void => {
     if (chain.analyser || typeof AudioContext === "undefined") {
       return;
+    }
+    if (hasMediaSource) {
+      // 当前 audio 已被旧 AudioContext 占用过 MediaElementSource，需换新元素才能再次创建
+      const curSrc = audio.currentSrc || audio.src || "";
+      const curTime = audio.currentTime;
+      const wasPaused = audio.paused;
+      recreateAudioElement(curSrc || undefined);
+      // 重建后若原曲在播，需保持进度（setSrc 会在外层重新设置，这里仅恢复时间）
+      if (curSrc) {
+        try { audio.currentTime = curTime; } catch {}
+        if (!wasPaused) void audio.play().catch(() => undefined);
+      }
     }
     const context = new AudioContext();
     const analyser = context.createAnalyser();
@@ -88,6 +148,7 @@ export function createHTMLAudioAdapter(element?: HTMLAudioElement): AudioAdapter
     analyser.connect(context.destination);
     chain.analyser = analyser;
     chain.context = context;
+    hasMediaSource = true;
     void context.resume().catch(() => undefined);
   };
 
@@ -97,6 +158,16 @@ export function createHTMLAudioAdapter(element?: HTMLAudioElement): AudioAdapter
       return;
     }
     attachAnalysis();
+  };
+
+  const detachAnalysis = (): void => {
+    if (!chain.analyser && !chain.context) return;
+    // 关闭 AudioContext 会自动断开 MediaElementSource，避免后续跨域无 CORS 曲目被静音（outputs zeroes）
+    // 仅刷新页面才能恢复的“播一段时间后无声、切歌不恢复”即由此引起：同源曲已创建 analyser，后续跨域无 CORS 曲仍走同一 MediaElementSource 导致静音
+    void chain.context?.close().catch(() => undefined);
+    chain.analyser = null;
+    chain.context = null;
+    // 不立即重建 <audio>，由下次需要 analyser 的同源曲在 attachAnalysis 时按需重建（避免无谓重建导致当前跨域无 CORS 曲的播放中断）
   };
 
   /** 跨域源：HEAD 探测 CORS 头（mode cors 下无 ACAO 直接 reject，安全判定不可用） */
@@ -130,20 +201,31 @@ export function createHTMLAudioAdapter(element?: HTMLAudioElement): AudioAdapter
     if (typeof AudioContext === "undefined") {
       return null;
     }
-    if (chain.analyser) {
-      return chain.analyser;
-    }
     const url = audio.currentSrc || audio.src || "";
     if (!url) {
       return null;
     }
     const origin = originOf(url);
-    if (origin && origin === location.origin) {
-      // 同源：无 CORS 限制，安全接管
-      maybeAttach();
-    } else {
-      probeCrossOrigin(url);
+    const isSameOrigin = !!origin && origin === location.origin;
+    if (isSameOrigin) {
+      // 同源：无 CORS 限制，安全接管（若之前因跨域无 CORS 已拆链，此处可重建）
+      if (!chain.analyser) maybeAttach();
+      return chain.analyser;
     }
+    // 跨域：需按 origin 粒度判定 CORS
+    if (chain.analyser) {
+      // 已有同源链但当前切到跨域：若已知该 origin 无 CORS，必须拆链以避免后续整轨静音；否则先拆链并重新探测
+      if (corsProbe && corsProbe.origin === origin) {
+        if (!corsProbe.allowed) {
+          detachAnalysis();
+          return null;
+        }
+        return chain.analyser;
+      }
+      // 未知 CORS 前，按最安全策略先拆链（避免用旧链播放无 CORS 曲导致静音），随后发起探测
+      detachAnalysis();
+    }
+    probeCrossOrigin(url);
     return chain.analyser;
   };
 
@@ -153,32 +235,41 @@ export function createHTMLAudioAdapter(element?: HTMLAudioElement): AudioAdapter
     }
   };
 
-  const bind = (event: AudioAdapterEvent): void => {
-    audio.addEventListener(event, () => {
-      handlers.get(event)?.forEach((handler) => handler());
-    });
-  };
-  for (const event of [
-    "timeupdate",
-    "ended",
-    "error",
-    "loadedmetadata",
-    "play",
-    "pause",
-  ] as const) {
-    bind(event);
-  }
+  bindAudioEvents(audio);
   // 方便调试与 SSR 检查
   audio.preload ??= "metadata";
 
   return {
     setSrc(url) {
+      // 换源时按新 URL 的 CORS 属性决定分析链去留：
+      // - 同源或已知 CORS 允许：保持/重建
+      // - 跨域未知或已知不允许：必须拆链，否则后续无 CORS 曲会因复用旧 MediaElementSource 而静音（仅刷新可恢复）
+      const newOrigin = originOf(url);
+      const isNewSameOrigin = !!newOrigin && newOrigin === location.origin;
+      if (!isNewSameOrigin && chain.analyser) {
+        if (!corsProbe || corsProbe.origin !== newOrigin) {
+          // 未知跨域，先拆链避免静音；探测结果回调中会按需重建
+          detachAnalysis();
+        } else if (!corsProbe.allowed) {
+          detachAnalysis();
+        }
+      }
       // 换源时机挂载分析链（播放中请求过分析，或探测刚通过）：接管不影响新音轨
       if (pendingAnalysis) {
         attachAnalysis();
         pendingAnalysis = false;
       }
       audio.src = url;
+      // 跨域且未设置 crossOrigin 时，浏览器不会发起 CORS 请求；若该 origin 已探测为允许，需带上 anonymous 才能让 MediaElementSource 正常工作
+      if (!isNewSameOrigin && corsProbe?.origin === newOrigin && corsProbe.allowed) {
+        audio.crossOrigin = "anonymous";
+      } else if (isNewSameOrigin) {
+        // 同源无需 crossOrigin，保持默认（避免对同源请求附加多余头）
+        audio.removeAttribute("crossorigin");
+      } else {
+        // 未知或不允许的跨域，保持无 crossOrigin 以保证至少可播放（无波形但不静音）
+        audio.removeAttribute("crossorigin");
+      }
       audio.load();
     },
     getSrc() {
