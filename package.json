@@ -1,6 +1,6 @@
 {
   "name": "nyx-player-solid",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "NyxPlayer 的 SolidJS 重构版 —— 简洁美观的音乐播放器组件库",
   "keywords": [
     "astro",
