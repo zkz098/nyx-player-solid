@@ -4,6 +4,8 @@ import { hasPlaylistURL, parsePlaylistUrl } from "../url-parser";
 export interface ModernMetingOptions {
   /** 现代 API 根地址（必填；指向 meting-api-rs 部署，如 https://your-host 或 https://your-host/v1） */
   baseURL: string;
+  /** 音频 URL 来源：outer=网易云未登录外链（默认，浏览器直连 music.163.com，绕开数据中心 IP 风控）；proxy=经 API 代理 302（自托管非风控 IP 时可拿高码率直链） */
+  urlSource?: "outer" | "proxy";
   /** 单次请求超时（ms，默认 10s） */
   timeoutMs?: number;
   /** 最大重试次数（默认 3，指数退避） */
@@ -17,6 +19,16 @@ export interface ModernMetingOptions {
 
 const DEFAULT_TIMEOUT = 10_000;
 const DEFAULT_RETRIES = 3;
+
+/**
+ * 网易云未登录外链接口（YesPlayMusic 同款策略）：用户浏览器直连网易云，
+ * 出口 IP 为用户住宅 IP，绕开 CF worker 数据中心出口被网易云 url 接口风控的问题
+ * （weapi/eapi 在数据中心 IP 一律 data[0].code=404）。
+ * 代价：~128kbps、部分无外链权限的歌返回 HTML 提示页（播放器 error 态提示）。
+ */
+function outerAudioURL(id: string): string {
+  return `https://music.163.com/song/media/outer/url?id=${encodeURIComponent(id)}`;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -83,7 +95,12 @@ function extractError(raw: unknown): string {
 }
 
 /** 把现代 Song DTO 映射为 nyx Song（懒加载 url/lrc，仅 pic 立即升级） */
-function toModernSong(raw: unknown, apiBase: string, provider: string): Song {
+function toModernSong(
+  raw: unknown,
+  apiBase: string,
+  provider: string,
+  urlKind: "outer" | "proxy",
+): Song {
   const item = isRecord(raw) ? raw : {};
   const id = str(item.id) || str(item.url_id) || str(item.lyric_id);
   const name = str(item.name);
@@ -115,8 +132,12 @@ function toModernSong(raw: unknown, apiBase: string, provider: string): Song {
   const picRaw = str(item.pic_url) || str(item.pic) || str(item.pic_id) || str(item.picUrl);
   const pic = upgradePic(picRaw);
 
-  // 懒代理：音频与歌词走现代接口，播放时才请求（避免 N+3 扇出）
-  const url = `${apiBase}/songs/${encodeURIComponent(id)}/url?platform=${encodeURIComponent(provider)}&redirect=1`;
+  // 音频源：outer = 网易云外链直连（默认，用户 IP 不受数据中心风控）；
+  // proxy = 走 API 代理 302（自托管在非风控 IP 时可拿 320k 直链）
+  const url =
+    urlKind === "outer"
+      ? outerAudioURL(id)
+      : `${apiBase}/songs/${encodeURIComponent(id)}/url?platform=${encodeURIComponent(provider)}&redirect=1`;
   const lrc = `${apiBase}/songs/${encodeURIComponent(id)}/lyric?platform=${encodeURIComponent(provider)}`;
 
   return { name, artist, url, pic, lrc };
@@ -140,6 +161,7 @@ export function createModernMetingProvider(options: ModernMetingOptions): Metada
     throw new Error("createModernMetingProvider requires baseURL");
   }
   const apiBase = normalizeBase(options.baseURL);
+  const urlKind = options.urlSource ?? "outer";
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT;
   const maxRetries = options.maxRetries ?? DEFAULT_RETRIES;
   const fetchImpl = options.fetchImpl ?? globalThis.fetch;
@@ -229,7 +251,7 @@ export function createModernMetingProvider(options: ModernMetingOptions): Metada
       }
       // 兼容空歌单
       if (rawData.length === 0) return [];
-      return (rawData as unknown[]).map((item) => toModernSong(item, apiBase, provider));
+      return (rawData as unknown[]).map((item) => toModernSong(item, apiBase, provider, urlKind));
     },
   };
 }
