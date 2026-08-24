@@ -4,4 +4,4 @@ compatibility_date = "2026-08-22"
 # Workers Static Assets — pure static (no SSR), Astro Starlight output
 [assets]
 directory = "./dist"
-not_found_handling = "single-page-application"
+not_found_handling = "404-page"
