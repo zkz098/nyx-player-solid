@@ -1,0 +1,108 @@
+name: Release
+
+# 触发方式：
+# 1. 推送 v* 标签（如 v0.1.0）时自动发布 npm + 创建 GitHub Release
+# 2. 手动运行（workflow_dispatch）：为当前最新的版本标签重新发布（npm 已存在版本会报错，主要供补发 Release）
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  # npm publish --provenance（OIDC 签名）所需；如 registry 不支持可移除该权限与 --provenance
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          # 完整历史与标签：changelog 需要版本区间
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.22.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          # 让 NODE_AUTH_TOKEN 写入 .npmrc，publish 步骤直接可用
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # —— 发布前全量基线：保证发出去的包是 lint / format / type / unit / build 全绿的 ——
+      - name: Lint
+        run: pnpm run lint:ci
+
+      - name: Check formatting
+        run: pnpm run format:ci
+
+      - name: Type check
+        run: pnpm run check
+
+      - name: Unit tests
+        run: pnpm run test
+
+      - name: Build (含 SSR safety check)
+        run: pnpm run build
+
+      - name: 解析本次发布版本标签
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            TAG="${GITHUB_REF_NAME}"
+          else
+            TAG="$(git describe --tags --abbrev=0)"
+          fi
+          echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
+
+      # 版本一致性：tag 必须是 v${package.json.version}，防止手滑发错版本到 npm
+      - name: 校验 tag 与 package.json version 一致
+        run: |
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          EXPECTED="v${PKG_VERSION}"
+          if [[ "${{ steps.version.outputs.tag }}" != "${EXPECTED}" ]]; then
+            echo "::error::tag（${{ steps.version.outputs.tag }}）与 package.json version（${PKG_VERSION}）不一致，应为 ${EXPECTED}"
+            exit 1
+          fi
+          echo "✓ 版本一致: ${EXPECTED}"
+          echo "version=${PKG_VERSION}" >> "${GITHUB_OUTPUT}"
+
+      - name: 发布到 npm
+        # --provenance：GitHub OIDC 在 npm 上的签名（trusted publishing）
+        run: pnpm publish --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: 生成 changelog 摘要
+        id: changelog
+        run: |
+          PREV_TAG="$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)"
+          if [[ -n "${PREV_TAG}" && "${PREV_TAG}" != "${{ steps.version.outputs.tag }}" ]]; then
+            { echo "## Changes since ${PREV_TAG}"; echo; git log --oneline --no-decorate "${PREV_TAG}..HEAD"; } > /tmp/body.md
+          else
+            { echo "## Changes"; echo; git log --oneline --no-decorate -30; } > /tmp/body.md
+          fi
+          cat /tmp/body.md
+
+      - name: 创建 GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: github.event_name == 'push'
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
+          body_path: /tmp/body.md
+          prerelease: ${{ contains(steps.version.outputs.tag, '-') }}

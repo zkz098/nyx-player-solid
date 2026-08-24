@@ -11,6 +11,10 @@
     "solidjs"
   ],
   "license": "AGPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zkz098/nyx-player-solid.git"
+  },
   "files": [
     "dist",
     "README.md",
