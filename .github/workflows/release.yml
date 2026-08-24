@@ -85,7 +85,9 @@ jobs:
         # npm Trusted Publishing（OIDC）：无需 NPM_TOKEN secret，自动附带 provenance attestations。
         # 前提：包已在 npm 存在（首次发布需手动），并在 npmjs.com 包 Settings → Trusted Publisher
         # 配置 GitHub Actions：owner=zkz098 / repo=nyx-player-solid / workflow file=release.yml（精确大小写）
-        run: pnpm publish
+        # --no-git-checks：tag 触发时 checkout 为 detached HEAD，pnpm 的 git-checks 会拒绝（ERR_PNPM_GIT_UNKNOWN_BRANCH）；
+        # CI 已跑全量基线 + 版本一致性校验，git-checks 无意义
+        run: pnpm publish --no-git-checks
 
       - name: 生成 changelog 摘要
         id: changelog
