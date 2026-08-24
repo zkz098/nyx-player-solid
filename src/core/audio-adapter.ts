@@ -51,8 +51,21 @@ function originOf(url: string): string | null {
   }
 }
 
+export interface HTMLAudioAdapterOptions {
+  /**
+   * 允许发起 CORS 探测的跨域 origin 白名单（默认空 = 不对任何跨域直链接管分析）。
+   * 直链（网易云外链/SoundHelix/CDN 等）无 ACAO 头，探测注定失败且浏览器会打 CORS 控制台噪音
+   * （fetch ... blocked by CORS policy）——直接按“不允许”处理并返回 null，播放不受影响。
+   * 自托管 proxy 场景（自己的 API 域带 ACAO）可视化需传入该 origin。
+   */
+  probeOrigins?: string[];
+}
+
 /** 创建 HTMLAudioElement 适配器（可注入外部元素，便于 E2E 替换与单例复用） */
-export function createHTMLAudioAdapter(element?: HTMLAudioElement): AudioAdapter {
+export function createHTMLAudioAdapter(
+  element?: HTMLAudioElement,
+  options: HTMLAudioAdapterOptions = {},
+): AudioAdapter {
   if (typeof Audio === "undefined") {
     // SSR / 无 Web Audio 环境：no-op 适配器保证组件可渲染，播放动作只在 client 生效
     return createNoopAdapter();
@@ -176,10 +189,16 @@ export function createHTMLAudioAdapter(element?: HTMLAudioElement): AudioAdapter
     // 不立即重建 <audio>，由下次需要 analyser 的同源曲在 attachAnalysis 时按需重建（避免无谓重建导致当前跨域无 CORS 曲的播放中断）
   };
 
-  /** 跨域源：HEAD 探测 CORS 头（mode cors 下无 ACAO 直接 reject，安全判定不可用） */
+  /** 跨域源：仅当 origin 在白名单（自己的代理 API，带 ACAO）时才 HEAD 探测；
+   *  普通直链（网易云外链/CDN）无 CORS 头，直接判定不允许且不发 fetch（避免无意义探测的 CORS 控制台噪音）。 */
   const probeCrossOrigin = (url: string): void => {
     const origin = originOf(url);
     if (!origin) {
+      return;
+    }
+    if (!(options.probeOrigins ?? []).includes(origin)) {
+      // 白名单外跨域直链：无 CORS 头，MediaElementSource 不可用，直接按不允许处理
+      corsProbe = { origin, allowed: false };
       return;
     }
     if (corsProbe && corsProbe.origin === origin) {
