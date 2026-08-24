@@ -33,8 +33,13 @@ function str(value: unknown): string {
  *  - 直链已是 CDN（p*.music.126.net）时直接替换 ?param
  *  - 仍是 meting API 跳转链接（api.injahow.cn/meting/?type=pic）时保持原样，由 AudioCover 在加载后跟随 302 再二次升级（见 AudioCover）
  *  tencent 同理：T002R300x300 → T002R500x500 */
+function forceHttps(url: string): string {
+  return url.startsWith("http://") ? `https://${url.slice(7)}` : url;
+}
+
 function upgradePic(url: string): string {
   if (!url) return url;
+  url = forceHttps(url);
   if (url.includes("music.126.net")) {
     return url.replace(/\?param=\d+y\d+/, "?param=500y500");
   }

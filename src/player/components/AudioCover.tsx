@@ -3,8 +3,13 @@ import { createMemo, createResource, Show } from "solid-js";
 import { usePlayer } from "../store";
 import { useCurrentSong } from "./useCurrentSong";
 
+function forceHttps(url: string): string {
+  return url.startsWith("http://") ? `https://${url.slice(7)}` : url;
+}
+
 function upgradeCdnPic(url: string): string {
   if (!url) return url;
+  url = forceHttps(url);
   if (url.includes("music.126.net")) {
     return url.replace(/\?param=\d+y\d+/, "?param=500y500");
   }

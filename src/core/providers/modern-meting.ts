@@ -30,8 +30,13 @@ function isString(value: unknown): value is string {
   return typeof value === "string";
 }
 
+function forceHttps(url: string): string {
+  return url.startsWith("http://") ? `https://${url.slice(7)}` : url;
+}
+
 function upgradePic(url: string): string {
   if (!url) return url;
+  url = forceHttps(url);
   if (url.includes("music.126.net")) {
     if (/\?param=\d+y\d+/.test(url)) return url.replace(/\?param=\d+y\d+/, "?param=500y500");
     // 无参时直接追加 500y500（现代接口 pic_url 常为裸 CDN）
