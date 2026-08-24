@@ -66,6 +66,22 @@ export function currentSongOf(state: PlayerState): Song | null {
   return songs?.[index] ?? null;
 }
 
+/** 播放失败 → 用户提示文案；返回 null 表示静默（不打扰用户）
+ * 按错误 name 判断（鸭子类型：浏览器 DOMException 在 jsdom 等环境未必继承 Error） */
+function resolvePlaybackError(error: unknown): string | null {
+  const name =
+    typeof error === "object" && error !== null ? (error as { name?: unknown }).name : undefined;
+  if (name === "NotAllowedError" || name === "AbortError") {
+    // 自动播放策略拒绝 / 切源竞态：静默回暂停态（等用户手势或新源生效）
+    return null;
+  }
+  if (name === "NotSupportedError" || name === "MediaError") {
+    // 无可用音源：多为版权限制（网易云 outer 外链对无权限曲返回 HTML→格式错误）
+    return "该曲暂无版权或无可用音源";
+  }
+  return "播放失败";
+}
+
 function defaultProvider(): MetadataProvider {
   return createCompositeProvider([directProvider, createMetingProvider()]);
 }
@@ -145,7 +161,7 @@ export class PlayerCore {
     if (songs.length === 0) {
       // 歌单未就绪（init 加载中/失败）：标记待播，init 完成后自动开始；UI 立即反馈播放态
       this.pendingPlay = true;
-      this.setState({ playing: true });
+      this.setState({ playing: true, error: null });
       return;
     }
     this.pendingPlay = false;
@@ -155,10 +171,10 @@ export class PlayerCore {
     if (song && this.adapter.getSrc?.() !== song.url) {
       this.syncSourceToAdapter();
     }
-    this.setState({ playing: true });
-    void this.playAudio().catch(() => {
-      // autoplay 策略拒绝：静默回退为暂停态，UI 可经此感知
-      this.setState({ playing: false, error: null });
+    this.setState({ playing: true, error: null });
+    void this.playAudio().catch((error) => {
+      // 区分静默（autoplay 拒绝/切源竞态）与可提示错误（版权限制/音源无效）
+      this.setState({ playing: false, error: resolvePlaybackError(error) });
     });
   }
 

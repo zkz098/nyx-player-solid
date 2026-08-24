@@ -85,6 +85,44 @@ describe("PlayerCore: play/pause", () => {
 
     player.toggle();
     expect(player.getState().playing).toBe(true);
+    expect(player.getState().error).toBeNull();
+  });
+
+  it("reports copyright-blocked source as user-facing error", async () => {
+    const { player, adapter } = await createPlayer();
+    adapter.playFailure = new DOMException("no supported source", "NotSupportedError");
+    player.play();
+    // playAudio() 异步 reject → 等微任务落地
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(player.getState().playing).toBe(false);
+    expect(player.getState().error).toContain("版权");
+
+    // 恢复正常后播放成功 → 清错
+    adapter.playFailure = null;
+    player.play();
+    await Promise.resolve();
+    expect(player.getState().playing).toBe(true);
+    expect(player.getState().error).toBeNull();
+  });
+
+  it("keeps autoplay rejection silent (no error message)", async () => {
+    const { player, adapter } = await createPlayer();
+    adapter.playFailure = new DOMException("user gesture required", "NotAllowedError");
+    player.play();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(player.getState().playing).toBe(false);
+    expect(player.getState().error).toBeNull();
+  });
+
+  it("falls back to generic message for unknown errors", async () => {
+    const { player, adapter } = await createPlayer();
+    adapter.playFailure = new Error("boom");
+    player.play();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(player.getState().error).toBe("播放失败");
   });
 });
 

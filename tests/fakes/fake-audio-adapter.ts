@@ -20,9 +20,15 @@ export class FakeAudioAdapter implements AudioAdapter {
   }
 
   async play(): Promise<void> {
+    if (this.playFailure) {
+      throw this.playFailure;
+    }
     this.playing = true;
     this.emit("play");
   }
+
+  /** 注入 play() 失败（模拟版权/autoplay 拒绝等场景） */
+  playFailure: Error | null = null;
 
   pause(): void {
     this.playing = false;
