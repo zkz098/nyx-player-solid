@@ -15,13 +15,26 @@ function stripEmptyCustomProps(css) {
     .replace(/^;/, "");
 }
 
+// src/player/player.css 用根绝对路径引用两张封面动画图（`/assets/play_*.avif`，
+// 原设计假设消费方自行将 assets 放站点根）。独立发布后消费方（如 Astro 站）不会自动
+// 获得这些文件 → 构建期内联为 data-URI，消除对外部文件路径的依赖（合计 ~5KB）。
+function inlineCoverAssets(css) {
+  const assets = ["play_disc.avif", "play_needle.avif"];
+  let out = css;
+  for (const name of assets) {
+    const data = readFileSync(`public/assets/${name}`).toString("base64");
+    out = out.replaceAll(`/assets/${name}`, `data:image/avif;base64,${data}`);
+  }
+  return out;
+}
+
 const uno = stripEmptyCustomProps(readFileSync("dist/uno.css", "utf8"));
-const player = readFileSync("src/player/player.css", "utf8");
+const player = inlineCoverAssets(readFileSync("src/player/player.css", "utf8"));
 writeFileSync("dist/nyx-player.css", `${uno}\n${player}\n`);
 rmSync("dist/uno.css", { force: true }); // 中间产物不入 dist
 console.log(
   "merged dist/nyx-player.css",
   (uno.length + player.length) / 1024,
   "KiB",
-  "(空值自定义属性已清理)",
+  "(空值自定义属性已清理 + 封面动画图已内联)",
 );
