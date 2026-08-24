@@ -98,9 +98,20 @@ jobs:
           fi
           cat /tmp/body.md
 
+      - name: 检查 GitHub Release 是否已存在
+        id: check_release
+        run: |
+          if gh release view "${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "exists=false" >> "${GITHUB_OUTPUT}"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
       - name: 创建 GitHub Release
         uses: softprops/action-gh-release@v2
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && steps.check_release.outputs.exists == 'false'
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: ${{ steps.version.outputs.tag }}
