@@ -1,6 +1,11 @@
 import { render } from "solid-js/web";
 import type { PlaylistSource } from "../../../src/core";
-import { NyxPlayer } from "../../../src/index";
+import {
+  NyxPlayer,
+  createCompositeProvider,
+  createModernMetingProvider,
+  directProvider,
+} from "../../../src/index";
 
 /**
  * demo 页面入口：自包含 bundle（solid 内联，可独立于 npm 环境运行）。
@@ -14,10 +19,17 @@ declare global {
 
 const urls = window.DEMO_URLS ?? [];
 
+// 使用自托管现代接口（meting-api-rs），与旧 https://api.injahow.cn/meting/ 解耦
+const modernProvider = createModernMetingProvider({
+  baseURL: "https://meting.api.zkz098.cn/",
+});
+const provider = createCompositeProvider([directProvider, modernProvider]);
+
 render(
   () => (
     <NyxPlayer
       urls={urls}
+      provider={provider}
       showBtn="#show"
       playBtn="#play"
       preset="shokax"
