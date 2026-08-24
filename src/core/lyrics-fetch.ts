@@ -21,10 +21,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 /**
  * 把现代 meting-api-rs 的 JSON envelope 归一化为纯 LRC 文本。
  * 兼容形状：
- *  - {"code":0,"message":"ok","data":{"lrc":"[00:00.00]...","tlyric":"...","yrc":"..."}} （/v1/songs/:id/lyric）
- *  - {"lrc":"..."} （简易包装）
+ *  - {"code":0,"message":"ok","data":{"lrc":"01:23.45 第一行…","tlyric":"…","yrc":"…"}} （/v1/songs/:id/lyric）
+ *  - {"lrc":"…"} （简易包装）
  * 非 JSON / 无 lrc 字段一律返回 null（调用方原样使用）。
  * 修复：曾把完整 JSON 原文当作 LRC 解析，JSON 内的换行以字面 \n 出现，导致歌词区显示满屏 \n。
+ * 注意：本注释不得出现方括号包裹时间戳的字面量（如 01:23.45 形式的 LRC 时间戳）——
+ * unocss presetWind 会把扫描到的方括号内容当成类名 token，生成非法 CSS
+ * （`.\[00:00.00\]{00:00.00;}`），lightningcss 1.33 解析崩。
  */
 export function normalizeLyricText(text: string): string | null {
   if (!text.trimStart().startsWith("{")) {
