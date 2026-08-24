@@ -50,7 +50,7 @@
     "preview": "vite preview",
     "docs:dev": "pnpm docs:demo && pnpm -F nyx-player-docs dev",
     "docs:demo": "node scripts/build-demo.mjs",
-    "docs:build": "pnpm docs:demo && pnpm -F nyx-player-docs build",
+    "docs:build": "pnpm build && pnpm docs:demo && pnpm -F nyx-player-docs build",
     "docs:preview": "pnpm -F nyx-player-docs preview",
     "docs:check": "pnpm -F nyx-player-docs check",
     "check": "tsc -p tsconfig.json --noEmit",

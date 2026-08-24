@@ -1,4 +1,4 @@
-name = "nyx-player-docs"
+name = "nyx-player-solid"
 compatibility_date = "2026-08-22"
 
 # Workers Static Assets — pure static (no SSR), Astro Starlight output
