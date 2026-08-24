@@ -153,6 +153,10 @@ export function createDarkModeSignal(target: DarkModeTarget | undefined): () => 
   }
 
   // selector 模式：观察 html 的 attribute 变化（博客切换 data-theme 时跟随）
+  if (typeof document === "undefined") {
+    // SSR：无 DOM 可观察，返回初始值（hydration 后客户端重新创建本信号并跟随主题）
+    return mode;
+  }
   const query = (): boolean => Boolean(document.querySelector(target));
   setMode(query() ? "dark" : "light");
   const observer = new MutationObserver(() => {
