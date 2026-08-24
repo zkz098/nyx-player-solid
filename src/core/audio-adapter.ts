@@ -85,7 +85,9 @@ export function createHTMLAudioAdapter(element?: HTMLAudioElement): AudioAdapter
     const playbackRate = old.playbackRate;
     old.pause();
     old.removeAttribute("src");
-    try { old.load(); } catch {}
+    try {
+      old.load();
+    } catch {}
     audioListenersBound = false;
     const next = new Audio();
     next.volume = vol;
@@ -100,7 +102,9 @@ export function createHTMLAudioAdapter(element?: HTMLAudioElement): AudioAdapter
       audio.src = newSrc;
     } else if (!wasPaused) {
       // 若重建时原音频在播（极少见），尝试保持时间进度（由调用方决定是否 play）
-      try { audio.currentTime = curTime; } catch {}
+      try {
+        audio.currentTime = curTime;
+      } catch {}
     }
     return next;
   };
@@ -136,7 +140,9 @@ export function createHTMLAudioAdapter(element?: HTMLAudioElement): AudioAdapter
       recreateAudioElement(curSrc || undefined);
       // 重建后若原曲在播，需保持进度（setSrc 会在外层重新设置，这里仅恢复时间）
       if (curSrc) {
-        try { audio.currentTime = curTime; } catch {}
+        try {
+          audio.currentTime = curTime;
+        } catch {}
         if (!wasPaused) void audio.play().catch(() => undefined);
       }
     }

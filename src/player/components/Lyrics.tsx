@@ -41,33 +41,31 @@ export function Lyrics(): JSX.Element {
   // 注意：current 不存入缓存对象（就地突变不会触发 Solid 细粒度更新），
   // 而是在渲染时按 activeIndex() 实时计算，保证高亮随 currentTime 正确切换。
   const windowCache = new Map<number, { key: number; line: WordLyricLine }>();
-  const windowLines = createMemo<Array<{ key: number; line: WordLyricLine }>>(
-    () => {
-      const list = lines();
-      const active = activeIndex();
-      if (active < 0 || list.length === 0) {
-        windowCache.clear();
-        return [];
+  const windowLines = createMemo<Array<{ key: number; line: WordLyricLine }>>(() => {
+    const list = lines();
+    const active = activeIndex();
+    if (active < 0 || list.length === 0) {
+      windowCache.clear();
+      return [];
+    }
+    const start = Math.max(0, active - WINDOW);
+    const end = Math.min(list.length, active + WINDOW + 1);
+    const out: Array<{ key: number; line: WordLyricLine }> = [];
+    for (let i = start; i < end; i++) {
+      const line = list[i];
+      if (!line) continue;
+      let entry = windowCache.get(i);
+      if (!entry || entry.line !== line) {
+        entry = { key: i, line };
+        windowCache.set(i, entry);
       }
-      const start = Math.max(0, active - WINDOW);
-      const end = Math.min(list.length, active + WINDOW + 1);
-      const out: Array<{ key: number; line: WordLyricLine }> = [];
-      for (let i = start; i < end; i++) {
-        const line = list[i];
-        if (!line) continue;
-        let entry = windowCache.get(i);
-        if (!entry || entry.line !== line) {
-          entry = { key: i, line };
-          windowCache.set(i, entry);
-        }
-        out.push(entry);
-      }
-      for (const k of Array.from(windowCache.keys())) {
-        if (k < start || k >= end) windowCache.delete(k);
-      }
-      return out;
-    },
-  );
+      out.push(entry);
+    }
+    for (const k of Array.from(windowCache.keys())) {
+      if (k < start || k >= end) windowCache.delete(k);
+    }
+    return out;
+  });
 
   return (
     <div class="lrc relative mt-1.25 h-24 overflow-hidden text-center text-3">

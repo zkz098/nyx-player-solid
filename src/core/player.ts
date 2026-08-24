@@ -417,7 +417,7 @@ export class PlayerCore {
     this.recordHistory(playlistIndex, songIndex);
 
     const wasPlaying = this.state.playing;
-    this.setState({ perSongIndex, perLastIndex, currentTime: 0, duration: 0 });
+    this.setState({ perSongIndex, perLastIndex, currentTime: 0, duration: 0, error: null });
     this.syncSourceToAdapter();
     if (wasPlaying) {
       void this.playAudio().catch(() => undefined);

@@ -5,20 +5,20 @@
 
 ## ✅ 已完成里程碑（R1-R4 全部完成）
 
-| # | 里程碑 | commit | 验证 |
-|---|--------|--------|------|
-| 1 | 骨架 + core 层（PlayerCore / AudioAdapter / providers / lrc / url-parser） | `cad59bf` | 57 unit |
-| 2 | Solid UI 等价迁移 + 修 2 bug（lrc 高亮、ended 切歌） | `5c362ba` | 60 unit + 5 E2E |
-| 3 | Review 修复（prev 回退、restore 位置、persist flush、点击外部关闭）+ UI 层测试 | `d0d3387` | 72 unit + 5 E2E |
-| 4 | 交付层（lib 双产物 / 静态 CSS / `<nyx-player>` / SSR 安全） | `ac2868c` | 73 unit + 5 E2E + build+SSR check |
-| 5 | R4 8.1 MediaSession + 媒体键 | `2612812` | 83 unit + 5 E2E + build |
-| 6 | R4 8.2 拖拽 seek + 音量滑杆 | `bdd85ff` | 90 unit + 7 E2E + build |
-| 7 | R4 8.3 歌词增强（行 seek + 卡拉 OK 逐字） | `153fd8c` | 101 unit + 8 E2E + build |
-| 8 | R4 8.4 MiniBar 双形态 | `5b1394d` | 104 unit + 11 E2E + build |
-| 9 | R4 8.5 跨歌单连续播放 + 播放历史 | `982abf9` | 115 unit + 11 E2E + build |
-| 10 | R4 8.6 音频可视化 + CPU 性能层级自适应帧率 | `37880c4` | 122 unit + 12 E2E + build+SSR check |
-| 11 | R4 8.7 中英双语文档站（Astro Starlight）+ README/LICENSE | `61c753a` | docs:build 23 页 + demo + pack 核对 |
-| 12 | UI 修复轮：controller/图标/跨域静音/dev uno 注入/尺寸/时间错位/tab/直接播放/动画 | `05a87c1`… | 129 unit + 12 E2E + build+SSR |
+| #   | 里程碑                                                                           | commit     | 验证                                |
+| --- | -------------------------------------------------------------------------------- | ---------- | ----------------------------------- |
+| 1   | 骨架 + core 层（PlayerCore / AudioAdapter / providers / lrc / url-parser）       | `cad59bf`  | 57 unit                             |
+| 2   | Solid UI 等价迁移 + 修 2 bug（lrc 高亮、ended 切歌）                             | `5c362ba`  | 60 unit + 5 E2E                     |
+| 3   | Review 修复（prev 回退、restore 位置、persist flush、点击外部关闭）+ UI 层测试   | `d0d3387`  | 72 unit + 5 E2E                     |
+| 4   | 交付层（lib 双产物 / 静态 CSS / `<nyx-player>` / SSR 安全）                      | `ac2868c`  | 73 unit + 5 E2E + build+SSR check   |
+| 5   | R4 8.1 MediaSession + 媒体键                                                     | `2612812`  | 83 unit + 5 E2E + build             |
+| 6   | R4 8.2 拖拽 seek + 音量滑杆                                                      | `bdd85ff`  | 90 unit + 7 E2E + build             |
+| 7   | R4 8.3 歌词增强（行 seek + 卡拉 OK 逐字）                                        | `153fd8c`  | 101 unit + 8 E2E + build            |
+| 8   | R4 8.4 MiniBar 双形态                                                            | `5b1394d`  | 104 unit + 11 E2E + build           |
+| 9   | R4 8.5 跨歌单连续播放 + 播放历史                                                 | `982abf9`  | 115 unit + 11 E2E + build           |
+| 10  | R4 8.6 音频可视化 + CPU 性能层级自适应帧率                                       | `37880c4`  | 122 unit + 12 E2E + build+SSR check |
+| 11  | R4 8.7 中英双语文档站（Astro Starlight）+ README/LICENSE                         | `61c753a`  | docs:build 23 页 + demo + pack 核对 |
+| 12  | UI 修复轮：controller/图标/跨域静音/dev uno 注入/尺寸/时间错位/tab/直接播放/动画 | `05a87c1`… | 129 unit + 12 E2E + build+SSR       |
 
 工具链基线（每次改动必须保持）: `oxlint --type-aware --type-check` / `oxfmt` / `tsc -p tsconfig.json` / `vitest run` / `playwright test` / `pnpm build`（含 ssr-check）全绿，`pnpm lint:ci` / `format:ci` 被 CI 使用。
 
@@ -33,21 +33,25 @@
 - ~~dev 页面网易云歌单~~（已从 preview 移除；文档站 demo 保留，见 docs/static/demo/sources.js）
 
 ## 🕐 明确暂缓（决策时未选，可后续按需启用）
+
 - 键盘快捷键（space/←→/m）—— 与页面快捷键冲突风险，需可配置开关
 - 播放速率（0.5x-2x）—— 与卡拉 OK 逐字歌词有联动问题
 - bilibili provider —— 依赖 B 站接口稳定性，需标注实验性
 - 播放历史 UI 展示入口（core API 已就绪，8.5 验收只到单测）
 
 ## 🔜 自托管路线（网易云高清封面/音频质量可控）
+
 > 2026-08-23 最小改动已落地：`meting.ts:upgradePic` 对 `music.126.net` 直链 `?param=90y90→500y500`、`y.gtimg.cn` 的 `T002R300→500` 做前端替换；`AudioCover` 对 `api.injahow.cn/meting/?type=pic` 跳转链接跟随 302 后二次升级。`direct` 自传 `pic` 不受影响。
 >
 > **自托管可彻底摆脱公共 API 的 90 限制与限流**，按需启用：
+>
 > - **部署**：`docker run -d -p 3000:80 injahow/meting-api` 或 `metowolf/Meting` 自建，`CORS` 默认 `*`，`pic($id,500)` 直接返回 `500y500`，无需前端二次请求。
 > - **前端接入**：`createMetingProvider({ baseURL: "https://your-host/meting/" })` 或 `NyxPlayer` 的 `provider` 注入（`MetingOptions.baseURL` 已支持注入，`PlayerCore` 透传）。
 > - **直连不走 meting（备选）**：`GET https://music.163.com/api/song/detail/?ids=[id]` 取 `songs[0].album.picUrl` 后自拼 `?param=500y500`，同时可取更高 `br` 的 `url`（`320k`），完全可控但需自行处理 `weapi` 加密与 `Cookie`。
 > - **验收**：`preview` 切网易云歌单后封面 `currentSrc` 应含 `500y500`，`Network` 中 `p*.music.126.net` 单次 50-60KB（原 90y90 仅 3-4KB），`AudioCover` 6rem 在 DPR2 下边缘锐利无压缩块。
 
 ## 📌 实施注意（继承教训）
+
 1. oxlint 类型感知严格：新代码避免 `as` 断言，用类型守卫函数
 2. Solid 1.9: `createResource` 返回元组；createStore 从 `solid-js/store` 导入；**Transition/TransitionGroup 在 `solid-transition-group` 包（非 solid-js/web）**
 3. 新 UI 组件 JSX 必须在 `.tsx`；`src/` 内相对导入
