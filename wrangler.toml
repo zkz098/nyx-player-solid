@@ -1,0 +1,10 @@
+name = "nyx-player-solid"
+compatibility_date = "2026-08-22"
+
+# Workers Static Assets — docs site (Astro Starlight)
+# Root wrangler.toml for Wrangler v4 workspace-aware deploys.
+# When `wrangler deploy` is run at the workspace root (Cloudflare dashboard default),
+# this file is used. `docs/wrangler.toml` remains for `cd docs && wrangler dev`.
+[assets]
+directory = "docs/dist"
+not_found_handling = "404-page"
