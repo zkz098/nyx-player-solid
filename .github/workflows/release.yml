@@ -37,7 +37,7 @@ jobs:
         with:
           node-version: "22"
           cache: pnpm
-          # 让 NODE_AUTH_TOKEN 写入 .npmrc，publish 步骤直接可用
+          # 指向公共 registry（Trusted Publishing 不需要 token，OIDC 自动认证）
           registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
@@ -82,10 +82,10 @@ jobs:
           echo "version=${PKG_VERSION}" >> "${GITHUB_OUTPUT}"
 
       - name: 发布到 npm
-        # --provenance：GitHub OIDC 在 npm 上的签名（trusted publishing）
-        run: pnpm publish --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # npm Trusted Publishing（OIDC）：无需 NPM_TOKEN secret，自动附带 provenance attestations。
+        # 前提：包已在 npm 存在（首次发布需手动），并在 npmjs.com 包 Settings → Trusted Publisher
+        # 配置 GitHub Actions：owner=zkz098 / repo=nyx-player-solid / workflow file=release.yml（精确大小写）
+        run: pnpm publish
 
       - name: 生成 changelog 摘要
         id: changelog
