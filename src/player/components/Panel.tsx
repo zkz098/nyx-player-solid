@@ -30,19 +30,21 @@ export function Panel(props: PanelProps): JSX.Element {
       class="nyx-player panel player-info border-radius-0.8rem fixed z-9 overflow-hidden rounded-xl"
     >
       <Show when={hasLoaded()} fallback={<div class="nyx-loading">加载歌单中…</div>}>
-        <AudioCover />
+        <div class="preview flex flex-col items-center pb-0 pl-2.5 pr-2.5 pt-5 md:flex-row md:items-center md:pl-5 md:pr-5">
+          <AudioCover />
+          <AudioInfo />
+        </div>
         <Visualizer />
-        <AudioInfo />
         <ProgressBar />
         <Controller />
         <PlaylistTabs />
         <button
-          class="absolute right-3 top-2.5 flex h-8 w-8 cursor-pointer items-center justify-center p-1.5 hover:color-[var(--hover-btn)]"
+          class="nyx-close absolute right-4 top-3 flex h-8 w-8 cursor-pointer items-center justify-center"
           type="button"
           aria-label="关闭播放器"
           onClick={toggleOnClose}
         >
-          <span class="i-ri-close-line text-6" />
+          <span class="i-ri-close-line text-5" />
         </button>
       </Show>
     </div>

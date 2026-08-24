@@ -76,15 +76,12 @@ describe("getContextAnalysis CORS 安全接管", () => {
     await vi.waitFor(() => expect(adapter.getContextAnalysis?.()).not.toBeNull());
   });
 
-  it("（非空闲，暂停但带进度）不中断当前音轨：pending 到下次 setSrc 再挂载", () => {
+  it("（非空闲，暂停但带进度）亦立即接管（同源/CORS 允许时无缝切换，波形首播可见）", () => {
     const audio = new Audio();
     audio.src = `${location.origin}/music/a.mp3`;
-    audio.currentTime = 5; // 模拟有进度的暂停态（防止接管中断）
+    audio.currentTime = 5; // 模拟有进度的暂停态
     const adapter = createHTMLAudioAdapter(audio);
-    expect(adapter.getContextAnalysis?.()).toBeNull();
-
-    // 换源时机挂载，不影响正在播放的旧音轨
-    adapter.setSrc(`${location.origin}/music/b.mp3`);
+    // 8.6 修复后改为立即接管（MediaElementSource 接管已连回 destination，播放中亦可无缝切换）
     expect(adapter.getContextAnalysis?.()).not.toBeNull();
   });
 

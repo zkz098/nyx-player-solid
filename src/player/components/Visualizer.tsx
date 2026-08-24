@@ -62,9 +62,9 @@ export function Visualizer(): JSX.Element {
     canvas.style.height = `${CSS_HEIGHT}px`;
     ctx.scale(dpr, dpr);
 
-    const analyser = player.getAnalyser();
-    const binCount = analyser?.frequencyBinCount ?? BAR_COUNT;
-    const data = new Uint8Array(binCount);
+    let analyser = player.getAnalyser();
+    let binCount = analyser?.frequencyBinCount ?? BAR_COUNT;
+    let data = new Uint8Array(binCount);
     const color =
       getComputedStyle(document.documentElement).getPropertyValue("--primary-color").trim() ||
       "#0a7426";
@@ -90,6 +90,13 @@ export function Visualizer(): JSX.Element {
         return;
       }
       last = time;
+      // 同源音频在 Visualizer 挂载时 src 尚未就绪（meting 异步），需每帧重新探测以捕获迟到的 AnalyserNode
+      const current = player.getAnalyser();
+      if (current !== analyser) {
+        analyser = current;
+        binCount = analyser?.frequencyBinCount ?? BAR_COUNT;
+        data = new Uint8Array(binCount);
+      }
       if (analyser) {
         analyser.getByteFrequencyData(data);
       }

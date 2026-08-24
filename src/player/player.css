@@ -111,7 +111,46 @@
   opacity: 1;
 }
 
+/* ---- 预览区（原版 AudioPreview.vue：pt-5 侧边距 + 响应式横排） ---- */
+.nyx-player .preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 1.25rem;
+  padding-bottom: 0;
+  padding-left: 0.625rem;
+  padding-right: 0.625rem;
+}
+
+@media (min-width: 768px) {
+  .nyx-player .preview {
+    flex-direction: row;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+}
+
+/* ---- 关闭按钮（原版 AudioPlayer.vue：right-4 top-3 color --close-btn → hover --hover-btn） ---- */
+.nyx-player .nyx-close {
+  color: var(--close-btn);
+  border: none;
+  background: none;
+}
+
+.nyx-player .nyx-close:hover {
+  color: var(--hover-btn);
+}
+
 /* ---- 唱片 ---- */
+.nyx-player .cover {
+  width: fit-content;
+  margin-inline: auto;
+}
+
+.nyx-player .preview .cover {
+  margin-inline: 0;
+}
+
 .nyx-player .cover::before {
   content: "";
   position: absolute;
@@ -257,6 +296,19 @@
   height: 12.5rem;
   border-top: none;
   counter-reset: nyx-counter;
+  margin: 0.625rem 0 0;
+  padding: 0.3125rem 0;
+  padding-left: 0;
+  list-style: none;
+  font-size: 0.8125em;
+}
+
+.nyx-song-list > li {
+  height: 2rem;
+  padding: 0.3125rem 0.9375rem 0.3125rem 1.5625rem;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
 }
 
 .nyx-player .nyx-song-list > li::before {

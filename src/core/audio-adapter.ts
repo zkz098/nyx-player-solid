@@ -91,16 +91,12 @@ export function createHTMLAudioAdapter(element?: HTMLAudioElement): AudioAdapter
     void context.resume().catch(() => undefined);
   };
 
-  /** 空闲才立即挂载；播放中标记 pending 等下次换源（避免中断正在播放的音轨） */
+  /** 同源/CORS 允许时立即挂载（MediaElementSource 接管需连回 destination，播放中亦可无缝切换） */
   const maybeAttach = (): void => {
     if (chain.analyser) {
       return;
     }
-    if (audio.paused && audio.currentTime === 0) {
-      attachAnalysis();
-    } else {
-      pendingAnalysis = true;
-    }
+    attachAnalysis();
   };
 
   /** 跨域源：HEAD 探测 CORS 头（mode cors 下无 ACAO 直接 reject，安全判定不可用） */

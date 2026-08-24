@@ -17,8 +17,8 @@ test("面板渲染：控制器 5 按钮 + 歌单 tabs + 歌曲列表（直链 de
   await expect(page.locator('.nyx-player button[aria-label="下一首"]')).toHaveCount(1);
   await expect(page.locator('.nyx-player button[aria-label^="静音"]')).toHaveCount(1);
 
-  // 歌单 tab + 2 首直链歌曲
-  await expect(page.locator(".nyx-player .tabs > div ul > li")).toHaveCount(1);
+  // 歌单 tab（demo 直链 + 网易云测试歌单）+ 2 首直链歌曲（首个歌单）
+  await expect(page.locator(".nyx-player .tabs > div ul > li")).toHaveCount(2);
   await expect(page.locator(".nyx-player .nyx-song-list li")).toHaveCount(2);
 });
 

@@ -29,7 +29,7 @@ export function PlaylistTabs(): JSX.Element {
     <div class="playlist">
       <div class="tabs relative block">
         {/* 滚动容器 = nav（ul 撑满 nav 高度，li 不超高 → ::before 色条不被裁剪） */}
-        <div class="nav h-2.6875rem overflow-x-auto overflow-y-hidden border-b border-[var(--player-border)]">
+        <div class="nav h-[2.6875rem] overflow-x-auto overflow-y-hidden border-b border-[var(--player-border)]">
           <ul class="m-0 flex h-full whitespace-nowrap p-0">
             <For each={state.playlistNames}>
               {(name, index) => (
@@ -48,17 +48,17 @@ export function PlaylistTabs(): JSX.Element {
 
         <Show when={state.playlists[state.playlistIndex]}>
           {(songs) => (
-            <ol class="nyx-song-list relative m-0.625rem-0-0 list-none overflow-y-auto p-0.3125rem-0 text-0.8125em">
+            <ol class="nyx-song-list relative m-[0.625rem_0_0] list-none overflow-y-auto p-[0.3125rem_0] text-[0.8125em]">
               <For each={songs()}>
                 {(song, songIndex) => (
                   <li
-                    class="relative h-2rem flex cursor-pointer overflow-hidden p-0.3125rem-0.9375rem-0.3125rem-1.5625rem hover:bg-[var(--player-background)]"
+                    class="relative h-[2rem] flex cursor-pointer items-center overflow-hidden p-[0.3125rem_0.9375rem_0.3125rem_1.5625rem] hover:bg-[var(--player-background)]"
                     classList={{ current: isCurrentRow(state.playlistIndex, songIndex()) }}
                     onClick={() => store.playSong(state.playlistIndex, songIndex())}
                   >
                     <Show when={isCurrentRow(state.playlistIndex, songIndex())}>
                       <div
-                        class="progress absolute left-0 top-0 h-full rounded-0.8125em bg-[var(--primary-color-a)] transition-width duration-250 ease-linear"
+                        class="progress absolute left-0 top-0 h-full rounded-[0.8125em] bg-[var(--primary-color-a)] transition-width duration-250 ease-linear"
                         style={{ width: `${percent()}%` }}
                       />
                       {/* 时间固定在行右端（progress 宽度内会随进度漂移——错位修复） */}
