@@ -40,7 +40,10 @@
       "browser": "./dist/custom-element.js",
       "import": "./dist/custom-element.js"
     },
-    "./style": "./dist/nyx-player.css"
+    "./style": {
+      "types": "./dist/style.d.ts",
+      "default": "./dist/nyx-player.css"
+    }
   },
   "scripts": {
     "dev": "node scripts/dev.mjs",

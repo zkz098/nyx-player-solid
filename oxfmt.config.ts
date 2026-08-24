@@ -5,6 +5,7 @@ export default defineConfig({
     "dist/**",
     "coverage/**",
     "playwright-report/**",
+    "test-results/**",
     ".playwright-mcp/**",
     "docs/**",
     "node_modules",
