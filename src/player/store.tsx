@@ -207,7 +207,7 @@ export function createPlayerStore(options: PlayerStoreOptions): PlayerStore {
     if (persisted.muted && !core.getState().muted) {
       core.toggleMute();
     }
-    // 恢复到持久化的歌单/歌曲位置与播放进度（原子恢复，不重置为 0，不自动播放；位置无效则忽略）
+    // 恢复到持久化的歌单/歌曲位置与播放进度（原子恢复，支持自动续播；位置无效则忽略）
     const songs = state.playlists[persisted.playlistIndex];
     const songIndex = persisted.perSongIndex[persisted.playlistIndex];
     if (songs && songIndex !== undefined && songIndex >= 0 && songIndex < songs.length) {
@@ -216,7 +216,19 @@ export function createPlayerStore(options: PlayerStoreOptions): PlayerStore {
         songIndex,
         currentTime: persisted.currentTime,
         duration: persisted.duration,
+        playing: persisted.playing,
       });
+
+      // 若原先处于播放态但在新页面被浏览器 Autoplay 策略拦截（playing 回退为 false），注册一次性页面手势自动补播
+      if (persisted.playing && typeof document !== "undefined") {
+        const onFirstGesture = (): void => {
+          if (!core.getState().playing) {
+            core.play();
+          }
+        };
+        document.addEventListener("pointerdown", onFirstGesture, { once: true });
+        document.addEventListener("keydown", onFirstGesture, { once: true });
+      }
     }
   }
 

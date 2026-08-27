@@ -49,6 +49,10 @@ function PanelLike(): JSX.Element {
   );
 }
 
+beforeEach(() => {
+  window.sessionStorage?.clear();
+});
+
 describe("createPlayerStore 多实例隔离（R2 决策：工厂+Context）", () => {
   it("两个实例互不影响（原版全局单例踩踏问题回归）", async () => {
     const storeA = createPlayerStore({ sources, adapter: new FakeAudioAdapter() });
@@ -183,6 +187,32 @@ describe("PlayerStore 持久化（字段子集 + storage 适配器）", () => {
     expect(store.state.volume).toBe(0.5);
     // 歌曲位置对齐到第 2 首 + 进度恢复
     expect(store.state.perSongIndex[0]).toBe(1);
+    expect(store.state.currentTime).toBe(30);
+    expect(store.state.playing).toBe(false);
+  });
+
+  it("restore 恢复 playing: true 自动续播状态", async () => {
+    const storage = memoryStorage();
+    storage.setItem(
+      PERSIST_KEY,
+      JSON.stringify({
+        playing: true,
+        currentTime: 30,
+        duration: 100,
+        mode: "order",
+        playlistIndex: 0,
+        perSongIndex: [0],
+        perLastIndex: [0],
+        volume: 1,
+        muted: false,
+      }),
+    );
+    const adapter = new FakeAudioAdapter();
+    const store = createPlayerStore({ sources, adapter, storage });
+    await store.init();
+
+    expect(store.state.playing).toBe(true);
+    expect(adapter.playing).toBe(true);
     expect(store.state.currentTime).toBe(30);
   });
 

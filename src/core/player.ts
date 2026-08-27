@@ -169,7 +169,11 @@ export class PlayerCore {
     // 若当前有歌曲但适配器源不一致，先装载当前歌曲再播。
     const song = currentSongOf(this.state);
     if (song && this.adapter.getSrc?.() !== song.url) {
+      const targetTime = this.state.currentTime;
       this.syncSourceToAdapter();
+      if (targetTime > 0) {
+        this.adapter.seek(targetTime);
+      }
     }
     this.setState({ playing: true, error: null });
     void this.playAudio().catch((error) => {
@@ -314,15 +318,16 @@ export class PlayerCore {
   }
 
   /**
-   * MPA 跨页恢复：原子恢复歌单/曲目位置与播放进度（不重置为 0，不自动播放）
+   * MPA 跨页恢复：原子恢复歌单/曲目位置与播放进度（支持自动续播）
    */
   restoreState(persisted: {
     playlistIndex: number;
     songIndex: number;
     currentTime: number;
     duration?: number;
+    playing?: boolean;
   }): void {
-    const { playlistIndex, songIndex, currentTime, duration } = persisted;
+    const { playlistIndex, songIndex, currentTime, duration, playing } = persisted;
     if (playlistIndex < 0 || playlistIndex >= this.state.playlists.length) {
       return;
     }
@@ -347,6 +352,9 @@ export class PlayerCore {
     this.syncSourceToAdapter();
     if (validTime > 0) {
       this.adapter.seek(validTime);
+    }
+    if (playing) {
+      this.play();
     }
   }
 
