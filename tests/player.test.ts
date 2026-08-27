@@ -363,6 +363,27 @@ describe("PlayerCore: subscribe / restore / dispose", () => {
     expect(player.getState().currentTime).toBe(42);
   });
 
+  it("restoreState 原子恢复歌单、曲目位置、进度与时长，不产生中间 0 置零", async () => {
+    const { player, adapter } = await createPlayer();
+    const seenTimes: number[] = [];
+    player.subscribe((state) => seenTimes.push(state.currentTime));
+
+    player.restoreState({
+      playlistIndex: 0,
+      songIndex: 1,
+      currentTime: 68,
+      duration: 180,
+    });
+
+    expect(player.getState().playlistIndex).toBe(0);
+    expect(player.getState().perSongIndex[0]).toBe(1);
+    expect(player.getState().currentTime).toBe(68);
+    expect(player.getState().duration).toBe(180);
+    expect(adapter.currentTime).toBe(68);
+    // 验证整个过程未发出 currentTime: 0 的中间状态
+    expect(seenTimes).toEqual([68]);
+  });
+
   it("dispose stops adapter and clears listeners", async () => {
     const { player, adapter } = await createPlayer();
     const seen: string[] = [];

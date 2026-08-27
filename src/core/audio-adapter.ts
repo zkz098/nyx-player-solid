@@ -73,9 +73,24 @@ export function createHTMLAudioAdapter(
   let audio = element ?? new Audio();
   const handlers = new Map<AudioAdapterEvent, Set<() => void>>();
   let audioListenersBound = false;
+  let pendingSeekTime: number | null = null;
+  let targetSeekTime: number | null = null;
+
+  const applyPendingSeek = (target: HTMLAudioElement) => {
+    if (pendingSeekTime !== null && Number.isFinite(pendingSeekTime)) {
+      try {
+        target.currentTime = pendingSeekTime;
+      } catch {}
+      pendingSeekTime = null;
+    }
+  };
+
   const bindAudioEvents = (target: HTMLAudioElement) => {
     if (audioListenersBound) return;
     audioListenersBound = true;
+    target.addEventListener("seeked", () => {
+      targetSeekTime = null;
+    });
     for (const event of [
       "timeupdate",
       "ended",
@@ -85,6 +100,9 @@ export function createHTMLAudioAdapter(
       "pause",
     ] as const) {
       target.addEventListener(event, () => {
+        if (event === "loadedmetadata") {
+          applyPendingSeek(target);
+        }
         handlers.get(event)?.forEach((handler) => handler());
       });
     }
@@ -266,6 +284,8 @@ export function createHTMLAudioAdapter(
 
   return {
     setSrc(url) {
+      pendingSeekTime = null;
+      targetSeekTime = null;
       // 换源时按新 URL 的 CORS 属性决定分析链去留：
       // - 同源或已知 CORS 允许：保持/重建
       // - 跨域未知或已知不允许：必须拆链，否则后续无 CORS 曲会因复用旧 MediaElementSource 而静音（仅刷新可恢复）
@@ -301,6 +321,9 @@ export function createHTMLAudioAdapter(
       return audio.src ?? "";
     },
     async play() {
+      if (pendingSeekTime !== null && audio.readyState >= 1) {
+        applyPendingSeek(audio);
+      }
       // play() 返回 Promise，可能被 autoplay 策略拒绝
       resumeAnalysisContext();
       await audio.play();
@@ -310,7 +333,17 @@ export function createHTMLAudioAdapter(
     },
     seek(time) {
       if (Number.isFinite(time) && time >= 0) {
-        audio.currentTime = time;
+        targetSeekTime = time;
+        if (audio.readyState >= 1) {
+          try {
+            audio.currentTime = time;
+          } catch {
+            pendingSeekTime = time;
+          }
+          pendingSeekTime = null;
+        } else {
+          pendingSeekTime = time;
+        }
       }
     },
     setVolume(volume) {
@@ -320,6 +353,12 @@ export function createHTMLAudioAdapter(
       audio.muted = muted;
     },
     getCurrentTime() {
+      if (targetSeekTime !== null && (audio.seeking || audio.readyState < 1)) {
+        return targetSeekTime;
+      }
+      if (pendingSeekTime !== null && audio.readyState < 1) {
+        return pendingSeekTime;
+      }
       return Number.isFinite(audio.currentTime) ? audio.currentTime : 0;
     },
     getDuration() {
@@ -336,6 +375,8 @@ export function createHTMLAudioAdapter(
     },
     getContextAnalysis,
     dispose() {
+      pendingSeekTime = null;
+      targetSeekTime = null;
       audio.pause();
       audio.removeAttribute("src");
       audio.load();

@@ -169,13 +169,26 @@ export function createPlayerStore(options: PlayerStoreOptions): PlayerStore {
   }, SAVE_DEBOUNCE_MS);
   const stopPersistence = core.subscribe((next) => save(pickPersisted(next)));
 
-  onCleanup(() => {
-    unsubscribe();
-    stopPersistence();
-    // flush：确保 debounce 挂起的最后一次状态落盘（避免 dispose 丢状态）
+  const flush = (): void => {
     if (storage) {
       storage.setItem(PERSIST_KEY, JSON.stringify(pickPersisted(core.getState())));
     }
+  };
+
+  if (typeof window !== "undefined" && storage) {
+    window.addEventListener("pagehide", flush);
+    window.addEventListener("beforeunload", flush);
+  }
+
+  onCleanup(() => {
+    if (typeof window !== "undefined" && storage) {
+      window.removeEventListener("pagehide", flush);
+      window.removeEventListener("beforeunload", flush);
+    }
+    unsubscribe();
+    stopPersistence();
+    // flush：确保 debounce 挂起的最后一次状态落盘（避免 dispose 丢状态）
+    flush();
     core.dispose();
   });
 
@@ -194,12 +207,16 @@ export function createPlayerStore(options: PlayerStoreOptions): PlayerStore {
     if (persisted.muted && !core.getState().muted) {
       core.toggleMute();
     }
-    // 恢复到持久化的歌单/歌曲位置（不自动播放；位置无效则忽略）
+    // 恢复到持久化的歌单/歌曲位置与播放进度（原子恢复，不重置为 0，不自动播放；位置无效则忽略）
     const songs = state.playlists[persisted.playlistIndex];
     const songIndex = persisted.perSongIndex[persisted.playlistIndex];
     if (songs && songIndex !== undefined && songIndex >= 0 && songIndex < songs.length) {
-      core.playSong(persisted.playlistIndex, songIndex);
-      core.restore(persisted.currentTime);
+      core.restoreState({
+        playlistIndex: persisted.playlistIndex,
+        songIndex,
+        currentTime: persisted.currentTime,
+        duration: persisted.duration,
+      });
     }
   }
 

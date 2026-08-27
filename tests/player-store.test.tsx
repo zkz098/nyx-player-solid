@@ -214,6 +214,21 @@ describe("PlayerStore 持久化（字段子集 + storage 适配器）", () => {
     store.play();
     expect(store.state.playing).toBe(true); // 无存储也不报错
   });
+
+  it("pagehide / beforeunload 触发同步 flush（MPA 切页防抖不丢数据）", async () => {
+    const storage = memoryStorage();
+    const store = createPlayerStore({ sources, adapter: new FakeAudioAdapter(), storage });
+    await store.init();
+    store.play();
+    store.seek(55);
+
+    // 未等待 debounce 300ms，直接触发页面卸载事件
+    window.dispatchEvent(new Event("pagehide"));
+    const raw: unknown = JSON.parse(storage.getItem(PERSIST_KEY) ?? "{}");
+    const snapshot = isRecord(raw) ? raw : {};
+    expect(snapshot.currentTime).toBe(55);
+    expect(snapshot.playing).toBe(true);
+  });
 });
 
 describe("Portal 内 Context 再注入（Solid Portal 不穿透 Context）", () => {

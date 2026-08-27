@@ -26,9 +26,16 @@ const urls = [
     ],
   },
   {
-    name: "网易云测试歌单",
-    // 之前移除的网易云歌单（文档站 demo 已保留，此处同步恢复；需网络，本地通过 meting 解析）
-    url: "https://music.163.com/m/playlist?id=12834717281&creatorId=12676493230",
+    name: "示例歌单 2",
+    songs: [
+      {
+        name: "示例音频 3（同源）",
+        artist: "SoundHelix",
+        url: "/t-rex-roar.mp3",
+        pic: "https://picsum.photos/seed/nyx-3/300/300",
+        lrc: "[00:00.00]歌单 2 歌词第一行",
+      },
+    ],
   },
 ];
 

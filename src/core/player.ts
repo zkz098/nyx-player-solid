@@ -313,11 +313,48 @@ export class PlayerCore {
     this.switchSong(playlistIndex, songIndex);
   }
 
+  /**
+   * MPA 跨页恢复：原子恢复歌单/曲目位置与播放进度（不重置为 0，不自动播放）
+   */
+  restoreState(persisted: {
+    playlistIndex: number;
+    songIndex: number;
+    currentTime: number;
+    duration?: number;
+  }): void {
+    const { playlistIndex, songIndex, currentTime, duration } = persisted;
+    if (playlistIndex < 0 || playlistIndex >= this.state.playlists.length) {
+      return;
+    }
+    const songs = this.state.playlists[playlistIndex];
+    if (!songs || songIndex < 0 || songIndex >= songs.length) {
+      return;
+    }
+    const perSongIndex = [...this.state.perSongIndex];
+    perSongIndex[playlistIndex] = songIndex;
+    this.recordHistory(playlistIndex, songIndex);
+
+    const validTime = Number.isFinite(currentTime) && currentTime > 0 ? currentTime : 0;
+    const validDuration = Number.isFinite(duration) && (duration ?? 0) > 0 ? (duration ?? 0) : 0;
+
+    this.setState({
+      playlistIndex,
+      perSongIndex,
+      currentTime: validTime,
+      duration: validDuration,
+      error: null,
+    });
+    this.syncSourceToAdapter();
+    if (validTime > 0) {
+      this.adapter.seek(validTime);
+    }
+  }
+
   /** MPA 跨页恢复：跳转到持久化保存的进度（当前曲目不同则忽略由调用方判断） */
   restore(time: number): void {
     if (Number.isFinite(time) && time > 0) {
       this.adapter.seek(time);
-      this.setState({ currentTime: this.adapter.getCurrentTime() });
+      this.setState({ currentTime: time });
     }
   }
 
